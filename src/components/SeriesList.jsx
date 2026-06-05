@@ -14,7 +14,7 @@ import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, A
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return '';
-    const BASE_URL = 'http://localhost:8080';
+    const BASE_URL = 'http://62.84.177.49';
     return `${BASE_URL}${imagePath}`;
 };
 

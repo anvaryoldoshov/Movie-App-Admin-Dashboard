@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
-const API_URL = "http://localhost:8080";
+const API_URL = "http://62.84.177.49";
 
 // Get or generate deviceId
 let deviceId = localStorage.getItem("deviceId");
@@ -413,6 +413,16 @@ export const updateUser = async (id, userData) => {
   } catch (error) {
     console.error('Update user error:', error.response?.data || error.message);
     throw error.response?.data?.message || 'Failed to update user';
+  }
+};
+
+export const makeAdmin = async (userId) => {
+  try {
+    const response = await api.put(`/users/${userId}/make-admin`);
+    return response.data;
+  } catch (error) {
+    console.error('Make admin error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Failed to make admin';
   }
 };
 

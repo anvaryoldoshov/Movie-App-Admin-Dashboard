@@ -9,7 +9,7 @@ import {
 
 // ***************************************************************
 // BASE_URL server manzilini to'g'irlashni unutmang!
-const BASE_URL = 'http://localhost:8080'; 
+const BASE_URL = 'http://62.84.177.49';
 
 // Manzilni xavfsiz shakllantirish funksiyasi
 const getFullImageUrl = (imagePath) => {
