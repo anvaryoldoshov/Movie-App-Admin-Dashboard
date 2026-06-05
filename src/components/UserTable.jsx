@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { 
-  getAllUsers, 
-  getAllSeries, 
-  getAllUsersWithAccess, 
-  updateUser, 
-  updateUserAccess 
+import {
+  getAllUsers,
+  getAllSeries,
+  getAllUsersWithAccess,
+  updateUser,
+  updateUserAccess,
+  makeAdmin
 } from "../services/api";
 
 const UsersTable = () => {
@@ -288,6 +289,19 @@ const UsersTable = () => {
     }
   };
 
+  const handleMakeAdmin = async (user, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (!window.confirm(`${user.username} ni admin qilmoqchimisiz?`)) return;
+    try {
+      await makeAdmin(user.id);
+      setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: 'ADMIN' } : u));
+      setFilteredUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: 'ADMIN' } : u));
+      setError("");
+    } catch (err) {
+      setError("Admin qilishda xatolik: " + (err?.message || err));
+    }
+  };
+
   const handleUnsubscribeAllSeries = async (user, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     try {
@@ -375,6 +389,7 @@ const UsersTable = () => {
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Username</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Email</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Obuna</th>
+                <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Role</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Boshqaruv & Access</th>
               </tr>
             </thead>
@@ -389,9 +404,15 @@ const UsersTable = () => {
                   <td className="p-3 text-xs sm:text-sm font-medium">{user.username}</td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell text-gray-300">{user.email}</td>
                   <td className="p-3 text-xs sm:text-sm">
-                    {user.subscription ? 
-                        <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">Ha</span> : 
-                        <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-semibold">Yo‘q</span>
+                    {user.subscription ?
+                        <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">Ha</span> :
+                        <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-semibold">Yo’q</span>
+                    }
+                  </td>
+                  <td className="p-3 text-xs sm:text-sm hidden md:table-cell">
+                    {user.role === "ADMIN"
+                      ? <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">Admin</span>
+                      : <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-semibold">User</span>
                     }
                   </td>
                   <td className="p-3 text-sm flex flex-col gap-2">
@@ -451,6 +472,15 @@ const UsersTable = () => {
                       >
                         Barchasidan chiqarish
                       </button>
+
+                      {user.role !== "ADMIN" && (
+                        <button
+                          onClick={(e) => handleMakeAdmin(user, e)}
+                          className="px-2 py-1 text-xs rounded bg-yellow-600 hover:bg-yellow-700 text-white transition duration-200 shadow-sm"
+                        >
+                          Admin qilish
+                        </button>
+                      )}
                     </div>
                     {/* ----------------------------------------------------------- */}
                   </td>
