@@ -18,9 +18,9 @@ const Login = () => {
             const response = await login(email, password);
             const { token, refreshToken } = response;
 
-            const payload = JSON.parse(atob(token.split(‘.’)[1]));
-            if (payload.role !== ‘ADMIN’) {
-                setError(‘Sizda admin huquqi yo\’q’);
+            const payload = JSON.parse(atob(token.split(".")[1]));
+            if (payload.role !== "ADMIN") {
+                setError("Sizda admin huquqi yo’q");
                 return;
             }
 
