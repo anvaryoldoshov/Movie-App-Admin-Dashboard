@@ -18,16 +18,19 @@ const Login = () => {
             const response = await login(email, password);
             const { token, refreshToken } = response;
 
-            // console.log('Login successful:', response);
+            const payload = JSON.parse(atob(token.split(‘.’)[1]));
+            if (payload.role !== ‘ADMIN’) {
+                setError(‘Sizda admin huquqi yo\’q’);
+                return;
+            }
 
-            localStorage.setItem('token', token);
-            localStorage.setItem('refreshToken', refreshToken);
+            localStorage.setItem(‘token’, token);
+            localStorage.setItem(‘refreshToken’, refreshToken);
 
-            history.push('/movies');
+            history.push(‘/movies’);
         } catch (err) {
-            // Logikani o'zgartirmadik
-            setError(err.message || 'Login yoki parol noto‘g‘ri');
-            console.error('Frontend login xatosi:', err);
+            setError(err.message || ‘Login yoki parol noto\’g\’ri’);
+            console.error(‘Frontend login xatosi:’, err);
         }
     };
 
