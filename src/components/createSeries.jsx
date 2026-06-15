@@ -5,6 +5,8 @@ import { Upload, XCircle, CheckCircle } from 'lucide-react'; // Keling, zamonavi
 const CreateSeries = () => {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("COMING_SOON");
+  const [monthlyPrice, setMonthlyPrice] = useState("");
+  const [quarterlyPrice, setQuarterlyPrice] = useState("");
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
 
@@ -25,13 +27,17 @@ const CreateSeries = () => {
       const formData = new FormData();
       formData.append("title", title);
       formData.append("status", status);
+      if (monthlyPrice) formData.append("monthlyPrice", monthlyPrice);
+      if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
       formData.append("image", image);
 
       const res = await createSeries(formData);
       setMessage(`✅ Yangi series muvaffaqiyatli yaratildi. ID: ${res.id}`);
       setTitle("");
       setImage(null);
-      setStatus("COMING_SOON"); // Saqlashdan keyin statusni qaytarish
+      setStatus("COMING_SOON");
+      setMonthlyPrice("");
+      setQuarterlyPrice("");
     } catch (error) {
       console.error(error);
       setMessage("❌ Xatolik yuz berdi. Series yaratilmadi.");
@@ -88,6 +94,36 @@ const CreateSeries = () => {
               <option value="DRAFT" className='bg-[#1c1e2c]'>Qoralama</option>
               <option value="REMOVED" className='bg-[#1c1e2c]'>O'chirilgan</option>
             </select>
+          </div>
+
+          {/* Price Fields */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
+                1 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+                value={monthlyPrice}
+                onChange={(e) => setMonthlyPrice(e.target.value)}
+                placeholder="Masalan: 15000"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
+                3 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+                value={quarterlyPrice}
+                onChange={(e) => setQuarterlyPrice(e.target.value)}
+                placeholder="Masalan: 40000"
+              />
+            </div>
           </div>
 
           {/* Image Upload */}

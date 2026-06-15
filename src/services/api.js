@@ -165,37 +165,14 @@ export const login = async (email, password) => {
     const { token, refreshToken, deviceId: responseDeviceId } = response.data;
     localStorage.setItem('token', token);
     localStorage.setItem('refreshToken', refreshToken);
-    if (!responseDeviceId) {
-      console.warn('No deviceId in login response, using existing deviceId:', deviceId);
-    } else if (responseDeviceId !== deviceId) {
-      console.warn('Updating deviceId from response:', responseDeviceId);
+    if (responseDeviceId && responseDeviceId !== deviceId) {
       deviceId = responseDeviceId;
       localStorage.setItem('deviceId', responseDeviceId);
     }
     return response.data;
   } catch (error) {
     console.error('Sign-in error:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Invalid email or password';
-  }
-};
-
-export const signUp = async (email, password, username) => {
-  try {
-    const response = await api.post('/auth/sign-up', { email, password, username });
-    const { token, refreshToken, deviceId: responseDeviceId } = response.data;
-    localStorage.setItem('token', token);
-    localStorage.setItem('refreshToken', refreshToken);
-    if (!responseDeviceId) {
-      console.warn('No deviceId in sign-up response, using existing deviceId:', deviceId);
-    } else if (responseDeviceId !== deviceId) {
-      console.warn('Updating deviceId from response:', responseDeviceId);
-      deviceId = responseDeviceId;
-      localStorage.setItem('deviceId', responseDeviceId);
-    }
-    return response.data;
-  } catch (error) {
-    console.error('Sign-up error:', error.response?.data || error.message);
-    throw error.response?.data?.message || 'Registration failed';
+    throw error.response?.data?.message || 'Email yoki parol noto\'g\'ri';
   }
 };
 

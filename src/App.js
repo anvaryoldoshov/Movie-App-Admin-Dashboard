@@ -7,7 +7,6 @@ import CreateSeries from "./components/createSeries";
 import UsersTable from "./components/UserTable";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Sidebar from "./components/SideBar";
-import Register from "./components/Register";
 import SeriesList from "./components/SeriesList";
 import Episode from "./components/Episode";
 import BannerComponent from "./components/BannerComponent";
@@ -17,7 +16,7 @@ function App() {
     <Router>
       <Switch>
         <Route path="/login" component={Login} />
-        <Route path="/register" component={Register} />
+        <Redirect from="/register" to="/login" />
         
         <Route path="/">
           <Sidebar />

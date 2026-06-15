@@ -52,8 +52,7 @@ const VideoList = () => {
   const fetchPaidUsers = async () => {
     try {
       const res = await getAllUsers();
-      const filtered = res.filter((u) => u.subscription === true);
-      const sorted = filtered.sort((a, b) =>
+      const sorted = res.sort((a, b) =>
         a.username.localeCompare(b.username)
       );
       setPaidUsers(sorted);
