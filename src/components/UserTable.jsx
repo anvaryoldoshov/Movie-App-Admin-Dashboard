@@ -14,16 +14,12 @@ const UsersTable = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [error, setError] = useState("");
   const [editingUser, setEditingUser] = useState(null);
-  const [editForm, setEditForm] = useState({ username: "", email: "", subscription: false });
+  const [editForm, setEditForm] = useState({ username: "", email: "" });
   const [seriesList, setSeriesList] = useState([]);
   const [modalSearchTerm, setModalSearchTerm] = useState("");
   const [userAccessMap, setUserAccessMap] = useState({});
   const [selectedSeries, setSelectedSeries] = useState(new Set());
-  
-  // Obuna kunlari (umumiy obuna uchun)
-  const [subscriptionDays, setSubscriptionDays] = useState(30); 
-  // Har bir serial uchun kirish muddatini saqlash uchun Map
-  const [seriesAccessDays, setSeriesAccessDays] = useState({}); 
+  const [seriesAccessDays, setSeriesAccessDays] = useState({});
 
 
   useEffect(() => {
@@ -66,59 +62,22 @@ const UsersTable = () => {
     setEditForm({
       username: user.username,
       email: user.email,
-      subscription: user.subscription,
     });
-    
-    setSubscriptionDays(user.subscription ? 30 : 30); 
 
     const accessSet = userAccessMap[user.id] || new Set();
     const initialDays = {};
-    
-    // Obuna bo'lmasa va kirish huquqi mavjud bo'lsa default 30 kun beriladi (UI uchun)
     seriesList.forEach(s => {
-        initialDays[s.id] = accessSet.has(s.id) && !user.subscription ? 30 : 0; 
+      initialDays[s.id] = accessSet.has(s.id) ? 30 : 0;
     });
     setSeriesAccessDays(initialDays);
-
     setSelectedSeries(accessSet);
     setModalSearchTerm("");
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setEditForm(prev => {
-      const newState = {
-        ...prev,
-        [name]: type === "checkbox" ? checked : value,
-      };
-      
-      if (name === 'subscription') {
-        if (checked) {
-          // Obuna YOQILSA: Hamma serialni tanlab, kunlarni 30 ga sozlash (ASL MANTIQ)
-          setSelectedSeries(new Set(seriesList.map(s => s.id)));
-          const allDays = {};
-          seriesList.forEach(s => allDays[s.id] = 30);
-          setSeriesAccessDays(allDays);
-          setSubscriptionDays(30); 
-        } else {
-          // Obuna O'CHIRILSA: Hamma serialni tanlovdan chiqarish va kunlarni 0 qilish (ASL MANTIQ)
-          setSelectedSeries(new Set());
-          setSeriesAccessDays({});
-          setSubscriptionDays(0); 
-        }
-      }
-      return newState;
-    });
+    const { name, value } = e.target;
+    setEditForm(prev => ({ ...prev, [name]: value }));
   };
-  
-  // METOD: Umumiy obuna tugmalari uchun
-  const handleSubscriptionButton = (days) => {
-    setSubscriptionDays(days);
-    
-    if (editForm.subscription) {
-         setSelectedSeries(new Set(seriesList.map(s => s.id)));
-    }
-  }
   
   // METOD: Alohida serial tugmalari uchun
   const handleIndividualSeriesDaysButton = (seriesId, days) => {
@@ -162,9 +121,6 @@ const UsersTable = () => {
   };
 
   const handleSeriesToggle = (seriesId) => {
-    // Obuna yoqiq bo'lsa o'chiramiz
-    if (editForm.subscription) return;
-    
     setSelectedSeries(prev => {
       const updated = new Set(prev);
       if (updated.has(seriesId)) {
@@ -186,11 +142,7 @@ const UsersTable = () => {
       setError("Username va email kiritilishi shart.");
       return;
     }
-    if (editForm.subscription && (!subscriptionDays || subscriptionDays <= 0)) {
-       setError("Obuna uchun kunlar soni tanlanishi shart.");
-       return;
-    }
-    
+
     try {
       const updatedUser = await updateUser(editingUser.id, editForm);
       const updatedUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
@@ -199,35 +151,25 @@ const UsersTable = () => {
         u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
         u.email.toLowerCase().includes(searchTerm.toLowerCase())
       ));
-      
-      const seriesAccessMap = {};
-      if (!editForm.subscription) {
-        Array.from(selectedSeries).forEach(seriesId => {
-            const days = seriesAccessDays[seriesId] || 0;
-            if (days > 0) {
-              seriesAccessMap[seriesId] = days;
-            }
-        });
-      }
 
-      const accessPayload = {
-        seriesAccessMap: seriesAccessMap,
-        subscription: editForm.subscription,
-        subscriptionDays: editForm.subscription ? subscriptionDays : 0,
-      }
-      
-      await updateUserAccess(updatedUser.id, accessPayload); 
+      const seriesAccessMap = {};
+      Array.from(selectedSeries).forEach(seriesId => {
+        const days = seriesAccessDays[seriesId] || 0;
+        if (days > 0) {
+          seriesAccessMap[seriesId] = days;
+        }
+      });
+
+      await updateUserAccess(updatedUser.id, { seriesAccessMap });
 
       setUserAccessMap(prev => ({
         ...prev,
         [updatedUser.id]: new Set(selectedSeries)
       }));
 
-      // Reset
       setEditingUser(null);
-      setEditForm({ username: "", email: "", subscription: false });
+      setEditForm({ username: "", email: "" });
       setSelectedSeries(new Set());
-      setSubscriptionDays(30); 
       setSeriesAccessDays({});
       setError("");
     } catch (err) {
@@ -237,55 +179,23 @@ const UsersTable = () => {
 
   const handleCloseModal = () => {
     setEditingUser(null);
-    setEditForm({ username: "", email: "", subscription: false });
+    setEditForm({ username: "", email: "" });
     setModalSearchTerm("");
     setSelectedSeries(new Set());
-    setSubscriptionDays(30);
     setSeriesAccessDays({});
     setError("");
   };
   
-  // --- Yangi funksiyalar (Obuna/Barchasiga obuna tugmalari uchun) ---
-  const handleSubscribeUser = async (user, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    try {
-      const updated = await updateUser(user.id, { username: user.username, email: user.email, subscription: true });
-      setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-      setFilteredUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-      // Faqat subscription holatini o'zgartirish, accessga tegmaslik.
-      setError("");
-    } catch (err) {
-      setError("Obuna qilishda xatolik: " + (err?.message || err));
-    }
-  };
-
-  const handleUnsubscribeUser = async (user, e) => {
-    if (e && e.stopPropagation) e.stopPropagation();
-    try {
-      const updated = await updateUser(user.id, { username: user.username, email: user.email, subscription: false });
-      setUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-      setFilteredUsers(prev => prev.map(u => u.id === user.id ? updated : u));
-      setError("");
-    } catch (err) {
-      setError("Obunani bekor qilishda xatolik: " + (err?.message || err));
-    }
-  };
-
   const handleSubscribeAllSeries = async (user, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     try {
-      const map = {};
-      seriesList.forEach(s => { map[s.id] = 30; });
-      const payload = {
-        seriesAccessMap: map,
-        subscription: user.subscription, 
-        subscriptionDays: user.subscription ? 30 : 0 
-      };
-      await updateUserAccess(user.id, payload);
+      const seriesAccessMap = {};
+      seriesList.forEach(s => { seriesAccessMap[s.id] = 30; });
+      await updateUserAccess(user.id, { seriesAccessMap });
       setUserAccessMap(prev => ({ ...prev, [user.id]: new Set(seriesList.map(s => s.id)) }));
       setError("");
     } catch (err) {
-      setError("Barchasiga obuna qilishda xatolik: " + (err?.message || err));
+      setError("Barchasiga kirish berishda xatolik: " + (err?.message || err));
     }
   };
 
@@ -305,40 +215,17 @@ const UsersTable = () => {
   const handleUnsubscribeAllSeries = async (user, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
     try {
-      const payload = {
-        seriesAccessMap: {},   
-        subscription: user.subscription,
-        subscriptionDays: user.subscription ? 30 : 0
-      };
-      await updateUserAccess(user.id, payload);
+      await updateUserAccess(user.id, { seriesAccessMap: {} });
       setUserAccessMap(prev => ({ ...prev, [user.id]: new Set() }));
       setError("");
     } catch (err) {
       setError("Barchasidan chiqarishda xatolik: " + (err?.message || err));
     }
   };
-  // -----------------------------------------------------------------
 
 
   const filteredSeries = seriesList.filter(s =>
     s.title.toLowerCase().includes(modalSearchTerm.toLowerCase())
-  );
-
-  // Umumiy Obuna tugmasi komponenti
-  const SubscriptionButton = ({ days, label }) => (
-    <button
-      type="button"
-      onClick={() => handleSubscriptionButton(days)}
-      className={`px-3 py-1 rounded-lg text-sm transition duration-200 
-        ${subscriptionDays === days && editForm.subscription 
-          ? 'bg-green-600 text-white shadow-lg border-green-400' 
-          : 'bg-[#0f111a] text-gray-300 hover:bg-[#2a2c3e] border border-gray-600'
-        }
-      `}
-      disabled={!editForm.subscription}
-    >
-      {label}
-    </button>
   );
 
   // Alohida Serial tugmasi komponenti
@@ -388,7 +275,6 @@ const UsersTable = () => {
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">ID</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Username</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Email</th>
-                <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Obuna</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Role</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Boshqaruv & Access</th>
               </tr>
@@ -403,12 +289,6 @@ const UsersTable = () => {
                   <td className="p-3 text-xs sm:text-sm text-gray-400">{user.id}</td>
                   <td className="p-3 text-xs sm:text-sm font-medium">{user.username}</td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell text-gray-300">{user.email}</td>
-                  <td className="p-3 text-xs sm:text-sm">
-                    {user.subscription ?
-                        <span className="px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">Ha</span> :
-                        <span className="px-2 py-0.5 rounded-full bg-gray-500/20 text-gray-400 text-xs font-semibold">Yo’q</span>
-                    }
-                  </td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell">
                     {user.role === "ADMIN"
                       ? <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">Admin</span>
@@ -425,7 +305,7 @@ const UsersTable = () => {
                             <span
                               key={sid}
                               className="px-2 py-1 text-xs rounded-full bg-blue-600/50 text-white font-medium"
-                              title={user.subscription ? 'Obuna orqali' : 'Individual'}
+                              title="Individual kirish"
                             >
                               {s ? s.title : `ID:${sid}`}
                             </span>
@@ -441,29 +321,13 @@ const UsersTable = () => {
                       )}
                     </div>
 
-                    {/* Boshqaruv tugmalari - Ko'proq moslashuvchan (flex-wrap va kichik o'lchamlar) */}
+                    {/* Boshqaruv tugmalari */}
                     <div className="flex flex-wrap gap-1.5 mt-2">
-                      <button
-                        onClick={(e) => handleSubscribeUser(user, e)}
-                        className="px-2 py-1 text-xs rounded bg-indigo-600 hover:bg-indigo-700 text-white transition duration-200 shadow-sm"
-                        disabled={user.subscription}
-                      >
-                        Obuna
-                      </button>
-
-                      <button
-                        onClick={(e) => handleUnsubscribeUser(user, e)}
-                        className="px-2 py-1 text-xs rounded bg-red-600 hover:bg-red-700 text-white transition duration-200 shadow-sm"
-                        disabled={!user.subscription}
-                      >
-                        Obunani bekor qilish
-                      </button>
-
                       <button
                         onClick={(e) => handleSubscribeAllSeries(user, e)}
                         className="px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white transition duration-200 shadow-sm"
                       >
-                        Barchasiga obuna
+                        Barchasiga kirish
                       </button>
 
                       <button
@@ -482,7 +346,6 @@ const UsersTable = () => {
                         </button>
                       )}
                     </div>
-                    {/* ----------------------------------------------------------- */}
                   </td>
                 </tr>
               ))}
@@ -514,40 +377,8 @@ const UsersTable = () => {
                   placeholder="Email"
                 />
                 
-                {/* 1. Umumiy Obuna Tanlovi */}
-                <div className="border border-gray-600 rounded-lg p-4 space-y-3 bg-[#0f111a] shadow-md">
-                    <div className="flex items-center space-x-3">
-                      <input 
-                        type="checkbox" 
-                        name="subscription" 
-                        checked={editForm.subscription} 
-                        onChange={handleInputChange} 
-                        className="h-5 w-5 text-blue-600 rounded border-gray-600 bg-[#1c1e2c] focus:ring-blue-500"
-                      />
-                      <span className="text-lg font-semibold text-green-400">Barcha seriallarga obuna</span>
-                    </div>
-
-                    {editForm.subscription && (
-                        <div className="flex flex-col space-y-2 pt-2">
-                            <label className="text-sm text-gray-400">Obuna muddatini tanlang:</label>
-                            <div className="flex flex-wrap gap-2">
-                                <SubscriptionButton days={7} label="1 Haftalik" />
-                                <SubscriptionButton days={30} label="1 Oylik" />
-                                <SubscriptionButton days={90} label="3 Oylik" />
-                                <span className="p-2 text-sm bg-[#1c1e2c] border border-gray-500 rounded-lg flex items-center font-bold text-yellow-400 min-w-[70px] justify-center">
-                                    {subscriptionDays} Kun
-                                </span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-
                 <p className="text-sm text-gray-400 italic bg-[#1c1e2c] p-3 rounded-lg border border-gray-700">
-                  {editForm.subscription 
-                    ? `Obuna tanlangan. Barcha ${subscriptionDays} kun muddatga kirish beriladi. Individual serial tanlash o‘chiq.` 
-                    : "Obuna o'chiq. Seriallarni qo‘lda tanlang va kirish kunini belgilang."
-                  }
+                  Seriallarni tanlang va har biri uchun kirish kunini belgilang.
                 </p>
 
                 {/* Serial qidirish inputi */}
@@ -575,16 +406,15 @@ const UsersTable = () => {
                                     checked={selectedSeries.has(s.id)}
                                     onChange={() => handleSeriesToggle(s.id)}
                                     className="mr-3 h-5 w-5 text-blue-600 rounded border-gray-600 bg-[#0f111a] focus:ring-blue-500"
-                                    disabled={editForm.subscription}
                                 />
-                                <span className={editForm.subscription ? 'text-gray-500 font-normal' : 'text-white font-medium text-base'}>
+                                <span className="text-white font-medium text-base">
                                     {s.title}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Kun tanlash tugmalari va input - Obuna bo'lmasa ko'rinadi */}
-                        {!editForm.subscription && (
+                        {/* Kun tanlash tugmalari va input */}
+                        {(
                             <div className="flex flex-col space-y-2 pl-8">
                                 <div className="flex flex-wrap gap-2">
                                     <IndividualAccessButton seriesId={s.id} days={7} label="1 hafta" />

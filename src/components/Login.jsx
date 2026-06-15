@@ -27,8 +27,7 @@ const Login = () => {
 
             history.push("/movies");
         } catch (err) {
-            setError(err.message || "Login yoki parol noto'g'ri");
-            console.error("Frontend login xatosi:", err);
+            setError(typeof err === 'string' ? err : "Login yoki parol noto'g'ri");
         }
     };
 
@@ -39,13 +38,13 @@ const Login = () => {
         >
             <div className="absolute inset-0 bg-black opacity-60 backdrop-blur-sm"></div>
 
-            <div className="relative bg-[#1c1e2c] p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md text-white border border-gray-700/50 transform transition duration-500 hover:shadow-blue-500/20">
+            <div className="relative bg-[#1c1e2c] p-8 sm:p-10 rounded-xl shadow-2xl w-full max-w-md text-white border border-gray-700/50">
 
                 <div className="mb-8 text-center">
                     <h2 className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500 tracking-tight">
-                        Online TV
+                        Online TV Admin
                     </h2>
-                    <p className="text-gray-400 mt-2">Akkauntga kirish</p>
+                    <p className="text-gray-400 mt-2">Admin paneliga kirish</p>
                 </div>
 
                 {error && (
@@ -86,20 +85,6 @@ const Login = () => {
                         </div>
                     </div>
 
-                    <div className="flex justify-between items-center text-sm">
-                        <div className="flex items-center text-gray-400">
-                            <input
-                                type="checkbox"
-                                id="remember"
-                                className="mr-2 h-4 w-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500 cursor-pointer"
-                            />
-                            <label htmlFor="remember" className="select-none">Meni eslab qolish</label>
-                        </div>
-                        <a href="/forgot-password" className="text-blue-400 hover:text-blue-300 hover:underline transition duration-200">
-                            Parolni unutdingizmi?
-                        </a>
-                    </div>
-
                     <button
                         type="submit"
                         className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 rounded-lg text-white font-semibold text-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-lg shadow-blue-500/50 transform hover:scale-[1.01]"
@@ -108,14 +93,6 @@ const Login = () => {
                         <span>KIRISH</span>
                     </button>
 
-                    <div className="text-center pt-2">
-                        <p className="text-gray-400 text-sm">
-                            Akkauntingiz yo'qmi?
-                            <a href="/register" className="ml-1 text-blue-400 hover:text-blue-300 font-medium hover:underline transition duration-200">
-                                Ro'yxatdan o'tish
-                            </a>
-                        </p>
-                    </div>
                 </form>
 
             </div>

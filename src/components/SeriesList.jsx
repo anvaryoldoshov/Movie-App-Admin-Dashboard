@@ -30,6 +30,8 @@ const SeriesList = () => {
     videoUrl: "",
     image: null,
     status: "",
+    monthlyPrice: "",
+    quarterlyPrice: "",
   });
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -71,6 +73,8 @@ const SeriesList = () => {
           videoUrl: "",
           image: null,
           status: "",
+          monthlyPrice: "",
+          quarterlyPrice: "",
         });
         setFormErrors({});
         setImagePreview(null);
@@ -105,13 +109,14 @@ const SeriesList = () => {
 
   // Original handleEditSeriesClick
   const handleEditSeriesClick = (series) => {
-    setAddEpisodeSeriesId(null); 
+    setAddEpisodeSeriesId(null);
     setEditSeries(series);
     setFormData({
       title: series.title,
-      // XATOLIK TUZATILDI: s.status undefined bo'lishi mumkinligini hisobga olib, muqobil qiymat qo'yildi
-      status: series.status || '', 
+      status: series.status || '',
       image: null,
+      monthlyPrice: series.monthlyPrice != null ? String(series.monthlyPrice) : "",
+      quarterlyPrice: series.quarterlyPrice != null ? String(series.quarterlyPrice) : "",
     });
     setImagePreview(getFullImageUrl(series.imagePath));
     setFormErrors({});
@@ -197,6 +202,8 @@ const SeriesList = () => {
     const form = new FormData();
     form.append("title", formData.title);
     form.append("status", formData.status);
+    if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
+    if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -213,6 +220,8 @@ const SeriesList = () => {
         videoUrl: "",
         image: null,
         status: "",
+        monthlyPrice: "",
+        quarterlyPrice: "",
       });
       setImagePreview(null);
       setError(null);
@@ -252,6 +261,8 @@ const SeriesList = () => {
         videoUrl: "",
         image: null,
         status: "",
+        monthlyPrice: "",
+        quarterlyPrice: "",
       });
       setImagePreview(null);
       setError(null);
@@ -310,6 +321,8 @@ const SeriesList = () => {
         videoUrl: "",
         image: null,
         status: "",
+        monthlyPrice: "",
+        quarterlyPrice: "",
       });
       setImagePreview(null);
       setError(null);
@@ -338,6 +351,8 @@ const SeriesList = () => {
             videoUrl: "",
             image: null,
             status: "",
+            monthlyPrice: "",
+            quarterlyPrice: "",
           });
           setImagePreview(null);
           setFormErrors({});
@@ -411,14 +426,21 @@ const SeriesList = () => {
                 {s.title}
               </h2>
               <div className="flex items-center space-x-2 text-sm">
-                  {/* XATOLIK TUZATILDI: s.status mavjudligini tekshirish */}
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                       s.status === 'PUBLISHED' ? 'bg-green-600/20 text-green-400' :
                       s.status === 'COMING_SOON' ? 'bg-yellow-600/20 text-yellow-400' :
-                      'bg-red-600/20 text-red-400' // UNKNOWN/Undefined uchun rang
+                      'bg-red-600/20 text-red-400'
                   }`}>
-                      {s.status ? s.status.replace('_', ' ') : 'NO STATUS'} 
+                      {s.status ? s.status.replace('_', ' ') : 'NO STATUS'}
                   </span>
+              </div>
+              <div className="mt-1 flex flex-wrap gap-1">
+                  {s.monthlyPrice != null && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-blue-600/20 text-blue-300">1oy: {s.monthlyPrice.toLocaleString()} so'm</span>
+                  )}
+                  {s.quarterlyPrice != null && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-purple-600/20 text-purple-300">3oy: {s.quarterlyPrice.toLocaleString()} so'm</span>
+                  )}
               </div>
               
               <div className="mt-4 flex space-x-3 border-t border-gray-700 pt-3">
@@ -648,7 +670,7 @@ const SeriesList = () => {
                 {editSeries ? 'Serialni Tahrirlash' : 'Epizodni Tahrirlash'}
               </h2>
               <button
-                onClick={() => { setEditSeries(null); setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "" }); setFormErrors({}); setImagePreview(null); }}
+                onClick={() => { setEditSeries(null); setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "" }); setFormErrors({}); setImagePreview(null); }}
                 className="text-gray-400 hover:text-white transition duration-200 p-1 rounded-full hover:bg-gray-700"
                 aria-label="Close modal"
               >
@@ -707,7 +729,41 @@ const SeriesList = () => {
                   </select>
                   {formErrors.status && (<p className="text-red-400 text-xs mt-1">{formErrors.status}</p>)}
                 </div>
-                
+
+                {/* Narx maydonlari */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label htmlFor="series-monthly-price" className="block text-sm font-medium text-gray-300 mb-2">
+                      1 Oylik narx <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                    </label>
+                    <input
+                      id="series-monthly-price"
+                      type="number"
+                      min="0"
+                      name="monthlyPrice"
+                      value={formData.monthlyPrice}
+                      onChange={handleInputChange}
+                      placeholder="Masalan: 15000"
+                      className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="series-quarterly-price" className="block text-sm font-medium text-gray-300 mb-2">
+                      3 Oylik narx <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                    </label>
+                    <input
+                      id="series-quarterly-price"
+                      type="number"
+                      min="0"
+                      name="quarterlyPrice"
+                      value={formData.quarterlyPrice}
+                      onChange={handleInputChange}
+                      placeholder="Masalan: 40000"
+                      className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                    />
+                  </div>
+                </div>
+
                 {/* Rasm Yuklash */}
                 <div>
                   <label htmlFor="series-image" className="block text-sm font-medium text-gray-300 mb-2">
@@ -731,7 +787,7 @@ const SeriesList = () => {
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={() => { setEditSeries(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "" }); setFormErrors({}); setImagePreview(null); }}
+                  <button type="button" onClick={() => { setEditSeries(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "" }); setFormErrors({}); setImagePreview(null); }}
                     className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
                     Bekor qilish
                   </button>
@@ -823,7 +879,7 @@ const SeriesList = () => {
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={() => { setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "" }); setFormErrors({}); setImagePreview(null); }}
+                  <button type="button" onClick={() => { setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "" }); setFormErrors({}); setImagePreview(null); }}
                     className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
                     Bekor qilish
                   </button>
