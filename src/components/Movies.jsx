@@ -10,6 +10,7 @@ const Movies = () => {
     title: "",
     episodeNumber: "",
     videoUrl: "",
+    durationMinutes: "",
   });
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
@@ -46,6 +47,7 @@ const Movies = () => {
     formData.append("title", newEpisode.title);
     formData.append("episodeNumber", newEpisode.episodeNumber);
     formData.append("videoUrl", newEpisode.videoUrl);
+    if (newEpisode.durationMinutes) formData.append("durationMinutes", newEpisode.durationMinutes);
     formData.append("image", thumbFile);
 
     try {
@@ -54,7 +56,7 @@ const Movies = () => {
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
       // Reset form
-      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "" });
+      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationMinutes: "" });
       setThumbFile(null);
     } catch (err) {
       console.error(err);
@@ -145,8 +147,8 @@ const Movies = () => {
             </div>
           </div>
 
-          {/* Episode Number */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          {/* Episode Number + Duration */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">
                 Epizod raqami:
@@ -165,26 +167,45 @@ const Movies = () => {
                     />
                 </div>
             </div>
-          
-            {/* Video Link */}
+
             <div>
                 <label className="block text-sm font-medium mb-2 text-gray-300">
-                Video URL:
+                Davomiyligi (daqiqa):
                 </label>
                 <div className="relative">
-                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
                     <input
-                        type="text"
-                        value={newEpisode.videoUrl}
+                        type="number"
+                        min="1"
+                        value={newEpisode.durationMinutes}
                         onChange={(e) =>
-                            setNewEpisode({ ...newEpisode, videoUrl: e.target.value })
+                            setNewEpisode({ ...newEpisode, durationMinutes: e.target.value })
                         }
-                        className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500"
-                        required
-                        placeholder="Video manzilini kiriting"
+                        className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                        placeholder="45"
                     />
                 </div>
             </div>
+          </div>
+
+          {/* Video Link */}
+          <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
+              Video URL:
+              </label>
+              <div className="relative">
+                  <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <input
+                      type="text"
+                      value={newEpisode.videoUrl}
+                      onChange={(e) =>
+                          setNewEpisode({ ...newEpisode, videoUrl: e.target.value })
+                      }
+                      className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500"
+                      required
+                      placeholder="Video manzilini kiriting"
+                  />
+              </div>
           </div>
 
           {/* Thumbnail upload */}
