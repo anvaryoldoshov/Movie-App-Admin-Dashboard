@@ -560,7 +560,7 @@ const SeriesList = () => {
                                     )}
                                 </div>
                                 
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-2 gap-3">
                                     {/* Episode Number */}
                                     <div>
                                         <label
@@ -609,35 +609,35 @@ const SeriesList = () => {
                                             className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
                                         />
                                     </div>
+                                </div>
 
-                                    {/* Video URL */}
-                                    <div className="col-span-1">
-                                        <label
-                                            htmlFor={`video-url-add-${s.id}`}
-                                            className="block text-xs font-semibold text-gray-300 uppercase mb-1"
-                                        >
-                                            Video URL <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            id={`video-url-add-${s.id}`}
-                                            type="text"
-                                            name="videoUrl"
-                                            value={formData.videoUrl}
-                                            onChange={handleInputChange}
-                                            placeholder="Video URL manzili"
-                                            className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
-                                            formErrors.videoUrl
-                                                ? "border-red-500"
-                                                : "border-gray-700"
-                                            }`}
-                                            aria-required="true"
-                                        />
-                                        {formErrors.videoUrl && (
-                                            <p className="text-red-400 text-xs mt-1">
-                                            {formErrors.videoUrl}
-                                            </p>
-                                        )}
-                                    </div>
+                                {/* Video URL */}
+                                <div>
+                                    <label
+                                        htmlFor={`video-url-add-${s.id}`}
+                                        className="block text-xs font-semibold text-gray-300 uppercase mb-1"
+                                    >
+                                        Video URL <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id={`video-url-add-${s.id}`}
+                                        type="text"
+                                        name="videoUrl"
+                                        value={formData.videoUrl}
+                                        onChange={handleInputChange}
+                                        placeholder="Video URL manzili"
+                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
+                                        formErrors.videoUrl
+                                            ? "border-red-500"
+                                            : "border-gray-700"
+                                        }`}
+                                        aria-required="true"
+                                    />
+                                    {formErrors.videoUrl && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                        {formErrors.videoUrl}
+                                        </p>
+                                    )}
                                 </div>
                                 
                                 {/* Rasm Yuklash */}
