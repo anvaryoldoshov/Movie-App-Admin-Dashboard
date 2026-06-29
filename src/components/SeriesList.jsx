@@ -28,6 +28,7 @@ const SeriesList = () => {
     title: "",
     episodeNumber: "",
     videoUrl: "",
+    durationMinutes: "",
     image: null,
     status: "",
     monthlyPrice: "",
@@ -71,6 +72,7 @@ const SeriesList = () => {
           title: "",
           episodeNumber: "",
           videoUrl: "",
+          durationMinutes: "",
           image: null,
           status: "",
           monthlyPrice: "",
@@ -130,6 +132,7 @@ const SeriesList = () => {
       title: episode.title,
       episodeNumber: episode.episodeNumber,
       videoUrl: episode.videoUrl,
+      durationMinutes: episode.durationMinutes || "",
       image: null,
     });
     setImagePreview(
@@ -242,6 +245,7 @@ const SeriesList = () => {
     form.append("title", formData.title);
     form.append("episodeNumber", formData.episodeNumber);
     form.append("videoUrl", formData.videoUrl);
+    if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -302,6 +306,7 @@ const SeriesList = () => {
     form.append("title", formData.title);
     form.append("episodeNumber", formData.episodeNumber);
     form.append("videoUrl", formData.videoUrl);
+    if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -479,6 +484,9 @@ const SeriesList = () => {
                             <span className="truncate flex items-center space-x-1 font-medium text-gray-300">
                                 <Video className="w-3 h-3 text-blue-400 flex-shrink-0" />
                                 <span>{ep.episodeNumber}. {ep.title}</span>
+                                {ep.durationMinutes && (
+                                  <span className="text-gray-500 text-xs ml-1">⏱{ep.durationMinutes}daq</span>
+                                )}
                             </span>
                             <div className="flex space-x-2 flex-shrink-0 ml-2">
                                 <button
@@ -581,9 +589,29 @@ const SeriesList = () => {
                                             </p>
                                         )}
                                     </div>
-                                    
+
+                                    {/* Duration Minutes */}
+                                    <div>
+                                        <label
+                                            htmlFor={`episode-duration-add-${s.id}`}
+                                            className="block text-xs font-semibold text-gray-300 uppercase mb-1"
+                                        >
+                                            Daqiqa
+                                        </label>
+                                        <input
+                                            id={`episode-duration-add-${s.id}`}
+                                            type="number"
+                                            name="durationMinutes"
+                                            value={formData.durationMinutes}
+                                            onChange={handleInputChange}
+                                            placeholder="45"
+                                            min="1"
+                                            className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
+                                        />
+                                    </div>
+
                                     {/* Video URL */}
-                                    <div className="col-span-2">
+                                    <div className="col-span-1">
                                         <label
                                             htmlFor={`video-url-add-${s.id}`}
                                             className="block text-xs font-semibold text-gray-300 uppercase mb-1"
@@ -818,7 +846,7 @@ const SeriesList = () => {
                   {formErrors.title && (<p className="text-red-400 text-xs mt-1">{formErrors.title}</p>)}
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Episode Number */}
                     <div>
                         <label htmlFor="edit-episode-number" className="block text-sm font-medium text-gray-300 mb-2">
@@ -830,13 +858,30 @@ const SeriesList = () => {
                             name="episodeNumber"
                             value={formData.episodeNumber}
                             onChange={handleInputChange}
-                            placeholder="Epizod raqamini kiriting"
+                            placeholder="Epizod raqami"
                             className={`w-full p-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white ${formErrors.episodeNumber ? "border-red-500" : "border-gray-700"}`}
                             aria-required="true"
                         />
                         {formErrors.episodeNumber && (<p className="text-red-400 text-xs mt-1">{formErrors.episodeNumber}</p>)}
                     </div>
-                    
+
+                    {/* Duration Minutes */}
+                    <div>
+                        <label htmlFor="edit-duration-minutes" className="block text-sm font-medium text-gray-300 mb-2">
+                            Davomiyligi (daqiqa)
+                        </label>
+                        <input
+                            id="edit-duration-minutes"
+                            type="number"
+                            name="durationMinutes"
+                            value={formData.durationMinutes}
+                            onChange={handleInputChange}
+                            placeholder="45"
+                            min="1"
+                            className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white"
+                        />
+                    </div>
+
                     {/* Video URL */}
                     <div>
                         <label htmlFor="edit-video-url" className="block text-sm font-medium text-gray-300 mb-2">

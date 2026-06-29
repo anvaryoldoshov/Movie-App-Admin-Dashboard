@@ -16,6 +16,9 @@ const Episode = ({ episode, seriesId, onEdit, onDelete }) => {
           </p>
           <p className="text-sm text-gray-400">
             Epizod: <span className='text-blue-400 font-medium'>{episode.episodeNumber}</span>
+            {episode.durationMinutes && (
+              <span className="ml-3 text-gray-500">⏱ {episode.durationMinutes} daq</span>
+            )}
           </p>
         </div>
         
