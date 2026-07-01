@@ -146,7 +146,7 @@ const BannerComponent = () => {
       setSuccess("Banner o'chirildi!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      console.error(Error deleting banner:, error);
+      console.error('Error deleting banner:', error);
       setError(error?.message || "Bannerni o'chirishda xatolik.");
     }
   };
