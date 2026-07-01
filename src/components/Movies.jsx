@@ -10,7 +10,9 @@ const Movies = () => {
     title: "",
     episodeNumber: "",
     videoUrl: "",
+    durationHours: "",
     durationMinutes: "",
+    durationSeconds: "",
   });
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
@@ -47,7 +49,9 @@ const Movies = () => {
     formData.append("title", newEpisode.title);
     formData.append("episodeNumber", newEpisode.episodeNumber);
     formData.append("videoUrl", newEpisode.videoUrl);
+    if (newEpisode.durationHours) formData.append("durationHours", newEpisode.durationHours);
     if (newEpisode.durationMinutes) formData.append("durationMinutes", newEpisode.durationMinutes);
+    if (newEpisode.durationSeconds) formData.append("durationSeconds", newEpisode.durationSeconds);
     formData.append("image", thumbFile);
 
     try {
@@ -56,7 +60,7 @@ const Movies = () => {
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
       // Reset form
-      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationMinutes: "" });
+      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "" });
       setThumbFile(null);
     } catch (err) {
       console.error(err);
@@ -147,42 +151,65 @@ const Movies = () => {
             </div>
           </div>
 
-          {/* Episode Number + Duration */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">
-                Epizod raqami:
-                </label>
-                <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+          {/* Episode Number */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Epizod raqami:
+            </label>
+            <div className="relative">
+                <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <input
+                    type="number"
+                    min="1"
+                    value={newEpisode.episodeNumber}
+                    onChange={(e) =>
+                        setNewEpisode({ ...newEpisode, episodeNumber: e.target.value })
+                    }
+                    className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                    required
+                />
+            </div>
+          </div>
+
+          {/* Duration */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Davomiyligi:
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+                <div>
+                    <label className="block text-xs text-gray-500 mb-1">Soat</label>
                     <input
                         type="number"
-                        min="1"
-                        value={newEpisode.episodeNumber}
-                        onChange={(e) =>
-                            setNewEpisode({ ...newEpisode, episodeNumber: e.target.value })
-                        }
-                        className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-                        required
+                        min="0"
+                        value={newEpisode.durationHours}
+                        onChange={(e) => setNewEpisode({ ...newEpisode, durationHours: e.target.value })}
+                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                        placeholder="0"
                     />
                 </div>
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium mb-2 text-gray-300">
-                Davomiyligi (daqiqa):
-                </label>
-                <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />
+                <div>
+                    <label className="block text-xs text-gray-500 mb-1">Daqiqa</label>
                     <input
                         type="number"
-                        min="1"
+                        min="0"
+                        max="59"
                         value={newEpisode.durationMinutes}
-                        onChange={(e) =>
-                            setNewEpisode({ ...newEpisode, durationMinutes: e.target.value })
-                        }
-                        className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                        onChange={(e) => setNewEpisode({ ...newEpisode, durationMinutes: e.target.value })}
+                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
                         placeholder="45"
+                    />
+                </div>
+                <div>
+                    <label className="block text-xs text-gray-500 mb-1">Soniya</label>
+                    <input
+                        type="number"
+                        min="0"
+                        max="59"
+                        value={newEpisode.durationSeconds}
+                        onChange={(e) => setNewEpisode({ ...newEpisode, durationSeconds: e.target.value })}
+                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                        placeholder="30"
                     />
                 </div>
             </div>
