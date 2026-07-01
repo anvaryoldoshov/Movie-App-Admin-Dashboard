@@ -105,8 +105,10 @@ const SeriesList = () => {
   const handleSeriesClick = (seriesId) => {
     if (expandedSeries === seriesId) {
       setExpandedSeries(null);
+      setAddEpisodeSeriesId(null);
     } else {
       setExpandedSeries(seriesId);
+      setAddEpisodeSeriesId(null);
       if (!episodes[seriesId]) {
         fetchEpisodes(seriesId);
       }
@@ -410,7 +412,7 @@ const SeriesList = () => {
       )}
       
       {/* Seriallar Gridi (Premium Ko'rinish) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 sm:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 sm:gap-8 items-start">
         {series.map((s) => (
           <div
             key={s.id}
@@ -572,72 +574,75 @@ const SeriesList = () => {
                                     )}
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-3">
-                                    {/* Episode Number */}
-                                    <div>
-                                        <label
-                                            htmlFor={`episode-number-add-${s.id}`}
-                                            className="block text-xs font-semibold text-gray-300 uppercase mb-1"
-                                        >
-                                            № <span className="text-red-500">*</span>
-                                        </label>
-                                        <input
-                                            id={`episode-number-add-${s.id}`}
-                                            type="number"
-                                            name="episodeNumber"
-                                            value={formData.episodeNumber}
-                                            onChange={handleInputChange}
-                                            placeholder="№"
-                                            className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
-                                            formErrors.episodeNumber
-                                                ? "border-red-500"
-                                                : "border-gray-700"
-                                            }`}
-                                            aria-required="true"
-                                        />
-                                        {formErrors.episodeNumber && (
-                                            <p className="text-red-400 text-xs mt-1">
-                                            {formErrors.episodeNumber}
-                                            </p>
-                                        )}
-                                    </div>
+                                {/* Episode Number */}
+                                <div>
+                                    <label
+                                        htmlFor={`episode-number-add-${s.id}`}
+                                        className="block text-xs font-semibold text-gray-300 uppercase mb-1"
+                                    >
+                                        Epizod № <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        id={`episode-number-add-${s.id}`}
+                                        type="number"
+                                        name="episodeNumber"
+                                        value={formData.episodeNumber}
+                                        onChange={handleInputChange}
+                                        placeholder="1"
+                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
+                                        formErrors.episodeNumber
+                                            ? "border-red-500"
+                                            : "border-gray-700"
+                                        }`}
+                                        aria-required="true"
+                                    />
+                                    {formErrors.episodeNumber && (
+                                        <p className="text-red-400 text-xs mt-1">
+                                        {formErrors.episodeNumber}
+                                        </p>
+                                    )}
+                                </div>
 
-                                    {/* Duration */}
-                                    <div className="col-span-2">
-                                        <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">Davomiyligi</label>
-                                        <div className="flex items-center gap-1">
-                                            <input
-                                                type="number"
-                                                name="durationHours"
-                                                value={formData.durationHours}
-                                                onChange={handleInputChange}
-                                                placeholder="Soat"
-                                                min="0"
-                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
-                                            />
-                                            <span className="text-gray-500 text-xs flex-shrink-0">:</span>
-                                            <input
-                                                type="number"
-                                                name="durationMinutes"
-                                                value={formData.durationMinutes}
-                                                onChange={handleInputChange}
-                                                placeholder="Daq"
-                                                min="0"
-                                                max="59"
-                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
-                                            />
-                                            <span className="text-gray-500 text-xs flex-shrink-0">:</span>
-                                            <input
-                                                type="number"
-                                                name="durationSeconds"
-                                                value={formData.durationSeconds}
-                                                onChange={handleInputChange}
-                                                placeholder="Son"
-                                                min="0"
-                                                max="59"
-                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
-                                            />
-                                        </div>
+                                {/* Duration */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+                                        Davomiyligi (Soat : Daqiqa : Soniya)
+                                    </label>
+                                    <div className="grid grid-cols-3 gap-1.5">
+                                        <input
+                                            type="number"
+                                            name="durationHours"
+                                            value={formData.durationHours}
+                                            onChange={handleInputChange}
+                                            placeholder="00"
+                                            min="0"
+                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
+                                        />
+                                        <input
+                                            type="number"
+                                            name="durationMinutes"
+                                            value={formData.durationMinutes}
+                                            onChange={handleInputChange}
+                                            placeholder="00"
+                                            min="0"
+                                            max="59"
+                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
+                                        />
+                                        <input
+                                            type="number"
+                                            name="durationSeconds"
+                                            value={formData.durationSeconds}
+                                            onChange={handleInputChange}
+                                            placeholder="00"
+                                            min="0"
+                                            max="59"
+                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-1.5 mt-0.5">
+                                        <span className="text-center text-gray-500 text-xs">Soat</span>
+                                        <span className="text-center text-gray-500 text-xs">Daqiqa</span>
+                                        <span className="text-center text-gray-500 text-xs">Soniya</span>
                                     </div>
                                 </div>
 
