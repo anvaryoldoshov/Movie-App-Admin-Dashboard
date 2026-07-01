@@ -7,6 +7,7 @@ import {
   updateUserAccess,
   makeAdmin
 } from "../services/api";
+import ConfirmDialog from "./ConfirmDialog";
 
 const UsersTable = () => {
   const [users, setUsers] = useState([]);
@@ -20,6 +21,7 @@ const UsersTable = () => {
   const [userAccessMap, setUserAccessMap] = useState({});
   const [selectedSeries, setSelectedSeries] = useState(new Set());
   const [seriesAccessDays, setSeriesAccessDays] = useState({});
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, user: null });
 
 
   useEffect(() => {
@@ -199,9 +201,14 @@ const UsersTable = () => {
     }
   };
 
-  const handleMakeAdmin = async (user, e) => {
+  const handleMakeAdmin = (user, e) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    if (!window.confirm(`${user.username} ni admin qilmoqchimisiz?`)) return;
+    setConfirmDialog({ isOpen: true, user });
+  };
+
+  const confirmMakeAdmin = async () => {
+    const user = confirmDialog.user;
+    setConfirmDialog({ isOpen: false, user: null });
     try {
       await makeAdmin(user.id);
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, role: 'ADMIN' } : u));
@@ -250,8 +257,16 @@ const UsersTable = () => {
   };
   
   return (
-    // Responsive: Kichik ekranlarda padding ishlatildi, katta ekranlarda lg:ml-64 saqlanib qoldi
     <div className="min-h-screen bg-[#0f111a] p-4 sm:p-6 lg:p-8 lg:ml-64 flex justify-center">
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        type="warning"
+        title="Admin huquqi berish"
+        message={`${confirmDialog.user?.username} foydalanuvchisini admin qilmoqchimisiz? Bu amalni keyinchalik o'zgartirish mumkin.`}
+        confirmText="Ha, admin qilish"
+        onConfirm={confirmMakeAdmin}
+        onCancel={() => setConfirmDialog({ isOpen: false, user: null })}
+      />
       <div className="max-w-7xl w-full">
         <h1 className="text-3xl font-bold text-white mb-6 sm:mb-8 text-center tracking-tight">
           Foydalanuvchilar Ro‘yxati 🎬

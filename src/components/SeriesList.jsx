@@ -10,6 +10,7 @@ import {
 } from "../services/api";
 import Episode from "./Episode";
 import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus } from 'lucide-react';
+import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
 const getFullImageUrl = (imagePath) => {
@@ -42,6 +43,7 @@ const SeriesList = () => {
   const [formErrors, setFormErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
   const modalRef = useRef(null);
 
   // --- LOGIKA: ORIGINAL KODDAN O'ZGARIShSIZ SAQLANGAN ---
@@ -149,25 +151,34 @@ const SeriesList = () => {
     setFormErrors({});
   };
 
+  const closeConfirm = () => setConfirmDialog({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
+
   // Original handleDeleteSeries
-  const handleDeleteSeries = async (seriesId) => {
-    if (!window.confirm("Are you sure you want to delete this series?")) return;
-    try {
-      await deleteSeries(seriesId);
-      setSeries((prev) => prev.filter((s) => s.id !== seriesId));
-      setEpisodes((prev) => {
-        const updated = { ...prev };
-        delete updated[seriesId];
-        return updated;
-      });
-      setExpandedSeries(null);
-      setError(null);
-      setSuccess("Series deleted successfully");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError("Failed to delete series: " + (err.message || "Unknown error"));
-      console.error("Error deleting series:", err);
-    }
+  const handleDeleteSeries = (seriesId) => {
+    setConfirmDialog({
+      isOpen: true, type: 'danger',
+      title: "Serialni o'chirish",
+      message: "Haqiqatan ham ushbu serialni o'chirmoqchimisiz? Barcha epizodlar ham o'chib ketadi.",
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await deleteSeries(seriesId);
+          setSeries((prev) => prev.filter((s) => s.id !== seriesId));
+          setEpisodes((prev) => {
+            const updated = { ...prev };
+            delete updated[seriesId];
+            return updated;
+          });
+          setExpandedSeries(null);
+          setError(null);
+          setSuccess("Series deleted successfully");
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError("Failed to delete series: " + (err.message || "Unknown error"));
+          console.error("Error deleting series:", err);
+        }
+      },
+    });
   };
 
   // Original handleInputChange
@@ -289,22 +300,28 @@ const SeriesList = () => {
   };
 
   // Original handleDeleteEpisode
-  const handleDeleteEpisode = async (episodeId, seriesId) => {
-    if (!window.confirm("Are you sure you want to delete this episode?"))
-      return;
-    try {
-      await deleteEpisode(episodeId);
-      setEpisodes((prev) => ({
-        ...prev,
-        [seriesId]: prev[seriesId].filter((ep) => ep.id !== episodeId),
-      }));
-      setError(null);
-      setSuccess("Episode deleted successfully");
-      setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
-      setError("Failed to delete episode: " + (err.message || "Unknown error"));
-      console.error("Error deleting episode:", err);
-    }
+  const handleDeleteEpisode = (episodeId, seriesId) => {
+    setConfirmDialog({
+      isOpen: true, type: 'danger',
+      title: "Epizodni o'chirish",
+      message: "Haqiqatan ham ushbu epizodni o'chirmoqchimisiz?",
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await deleteEpisode(episodeId);
+          setEpisodes((prev) => ({
+            ...prev,
+            [seriesId]: prev[seriesId].filter((ep) => ep.id !== episodeId),
+          }));
+          setError(null);
+          setSuccess("Episode deleted successfully");
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError("Failed to delete episode: " + (err.message || "Unknown error"));
+          console.error("Error deleting episode:", err);
+        }
+      },
+    });
   };
 
   // Original handleAddEpisode
@@ -393,6 +410,15 @@ const SeriesList = () => {
 
   return (
     <div className="ml-0 md:ml-64 p-4 sm:p-6 lg:p-8 min-h-screen bg-gray-900 text-white">
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        type={confirmDialog.type}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText="Ha, o'chirish"
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={closeConfirm}
+      />
       <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-indigo-400 tracking-wider border-b-2 border-indigo-500/50 pb-3">
         Serial Kontentni Boshqarish Paneli 📺
       </h1>

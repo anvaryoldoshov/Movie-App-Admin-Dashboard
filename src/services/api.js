@@ -193,9 +193,8 @@ export const getBanners = async () => {
 export const addBanner = async (seriesId, imageFile) => {
   try {
     const formData = new FormData();
-    formData.append('seriesId', seriesId);
     formData.append('image', imageFile);
-    const response = await api.post('/banners/add', formData, {
+    const response = await api.post(`/banners/${seriesId}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;

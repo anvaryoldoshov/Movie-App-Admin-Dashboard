@@ -6,6 +6,7 @@ import {
   updateBanner,
   deleteBanner
 } from '../services/api';
+import ConfirmDialog from './ConfirmDialog';
 
 // ***************************************************************
 // BASE_URL server manzilini to'g'irlashni unutmang!
@@ -35,6 +36,8 @@ const BannerComponent = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, bannerId: null, seriesId: null, unlinked: false });
 
   useEffect(() => {
     fetchBanners();
@@ -96,18 +99,17 @@ const BannerComponent = () => {
              return;
         }
 
-        let message;
         if (isEditing) {
-            await updateBanner(formData.id, formData.image, formData.imageUrl, formData.seriesId); 
-            message = 'Banner muvaffaqiyatli yangilandi!';
+            await updateBanner(formData.id, formData.image, formData.imageUrl, formData.seriesId);
+            setSuccess('Banner muvaffaqiyatli yangilandi!');
         } else {
             await addBanner(formData.seriesId, formData.image);
-            message = 'Banner muvaffaqiyatli yaratildi!';
+            setSuccess('Banner muvaffaqiyatli yaratildi!');
         }
 
         resetForm();
         fetchBanners();
-        alert(message);
+        setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
         console.error('Error saving banner:', error);
         setError(error?.response?.data?.message || 'Saqlashda xatolik yuz berdi.');
@@ -131,21 +133,21 @@ const BannerComponent = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleDelete = async (id, seriesId) => {
-    if (!seriesId) {
-        if (!window.confirm('Bu banner serial bilan bog‘lanmagan. O‘chirishni davom ettirasizmi?')) return;
-    }
-      
-    if (window.confirm('Haqiqatan ham ushbu bannerni o‘chirmoqchimisiz?')) {
-      try {
-        // seriesId to'g'ri kelayotgani uchun funksiya chaqiruvi o'zgarishsiz qoldi
-        await deleteBanner(id, seriesId); 
-        fetchBanners();
-        alert('Banner o‘chirildi!');
-      } catch (error) {
-        console.error('Error deleting banner:', error);
-        alert(error?.message || 'Bannerni o‘chirishda xatolik.');
-      }
+  const handleDelete = (id, seriesId) => {
+    setConfirmDialog({ isOpen: true, bannerId: id, seriesId, unlinked: !seriesId });
+  };
+
+  const confirmDelete = async () => {
+    const { bannerId, seriesId } = confirmDialog;
+    setConfirmDialog({ isOpen: false, bannerId: null, seriesId: null, unlinked: false });
+    try {
+      await deleteBanner(bannerId, seriesId);
+      fetchBanners();
+      setSuccess("Banner o’chirildi!");
+      setTimeout(() => setSuccess(null), 3000);
+    } catch (error) {
+      console.error(‘Error deleting banner:’, error);
+      setError(error?.message || "Bannerni o’chirishda xatolik.");
     }
   };
 
@@ -158,8 +160,20 @@ const BannerComponent = () => {
 
   return (
     <div className="bg-[#0f111a] min-h-screen p-4 sm:p-6 lg:p-8 lg:ml-64 text-white">
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.unlinked ? "Serial bog'lanmagan" : "Bannerni o'chirish"}
+        message={confirmDialog.unlinked
+          ? "Bu banner hech qanday serial bilan bog'lanmagan. Shunga qaramay o'chirishni xohlaysizmi?"
+          : "Haqiqatan ham ushbu bannerni o'chirmoqchimisiz? Bu amalni qaytarib bo'lmaydi."}
+        confirmText="Ha, o'chirish"
+        type="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmDialog({ isOpen: false, bannerId: null, seriesId: null, unlinked: false })}
+      />
+
       <div className="max-w-6xl mx-auto">
-        
+
         {/* Header */}
         <div className="mb-8 pt-4">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
@@ -167,8 +181,12 @@ const BannerComponent = () => {
           </h1>
           <p className="text-gray-400 text-center mt-2">Seriallar uchun bannerlarni yuklang va boshqaring.</p>
         </div>
-        
-        {/* Xatolik xabari */}
+
+        {success && (
+          <div className="p-3 mb-6 bg-green-900/40 border border-green-600 rounded-lg text-green-300 text-center shadow-lg">
+            {success}
+          </div>
+        )}
         {error && (
             <div className="p-3 mb-6 bg-red-900/40 border border-red-600 rounded-lg text-red-300 text-center shadow-lg">
                 Xatolik: {error}
