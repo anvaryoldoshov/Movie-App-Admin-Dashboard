@@ -275,7 +275,7 @@ const BannerComponent = () => {
 
         {/* Bannerlar Ro'yxati */}
         <div className="bg-[#1c1e2c] p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold mb-6 text-yellow-400">Mavjud Bannerlar ðŸ–¼ï¸</h2>
+          <h2 className="text-2xl font-bold mb-6 text-yellow-400">Mavjud Bannerlar</h2>
           
           {banners.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Hozircha hech qanday banner mavjud emas.</p>
