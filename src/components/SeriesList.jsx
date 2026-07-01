@@ -963,7 +963,6 @@ const SeriesList = () => {
                     />
                     {formErrors.videoUrl && (<p className="text-red-400 text-xs mt-1">{formErrors.videoUrl}</p>)}
                 </div>
-                </div>
 
                 {/* Rasm Yuklash */}
                 <div>
