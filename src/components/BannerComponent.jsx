@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   getBanners,
   getSeries,
@@ -122,7 +122,7 @@ const BannerComponent = () => {
       id: banner.id,
       image: null,
       imageUrl: banner.image,
-      // ✨ TUZATISH: Endi to'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
+      // âœ¨ TUZATISH: Endi to'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
       seriesId: banner.seriesId || '' 
     });
     
@@ -143,11 +143,11 @@ const BannerComponent = () => {
     try {
       await deleteBanner(bannerId, seriesId);
       fetchBanners();
-      setSuccess("Banner o’chirildi!");
+      setSuccess("Banner oâ€™chirildi!");
       setTimeout(() => setSuccess(null), 3000);
     } catch (error) {
-      console.error(‘Error deleting banner:’, error);
-      setError(error?.message || "Bannerni o’chirishda xatolik.");
+      console.error(â€˜Error deleting banner:â€™, error);
+      setError(error?.message || "Bannerni oâ€™chirishda xatolik.");
     }
   };
 
@@ -177,7 +177,7 @@ const BannerComponent = () => {
         {/* Header */}
         <div className="mb-8 pt-4">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
-            {isEditing ? 'Banner Tahrirlash 🛠️' : 'Yangi Banner Yaratish ✨'}
+            {isEditing ? 'Banner Tahrirlash ðŸ› ï¸' : 'Yangi Banner Yaratish âœ¨'}
           </h1>
           <p className="text-gray-400 text-center mt-2">Seriallar uchun bannerlarni yuklang va boshqaring.</p>
         </div>
@@ -241,7 +241,7 @@ const BannerComponent = () => {
             {/* Rasm Preview */}
             {previewUrl && (
               <div className="col-span-1 lg:col-span-2">
-                <label className="block text-sm font-medium mb-2 text-gray-300">Rasm Ko‘rinishi</label>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Rasm Koâ€˜rinishi</label>
                 <div className='w-full h-auto max-h-80 overflow-hidden rounded-xl border-4 border-gray-700 shadow-xl bg-gray-900'>
                     <img
                         src={previewUrl}
@@ -275,7 +275,7 @@ const BannerComponent = () => {
 
         {/* Bannerlar Ro'yxati */}
         <div className="bg-[#1c1e2c] p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold mb-6 text-yellow-400">Mavjud Bannerlar 🖼️</h2>
+          <h2 className="text-2xl font-bold mb-6 text-yellow-400">Mavjud Bannerlar ðŸ–¼ï¸</h2>
           
           {banners.length === 0 ? (
             <p className="text-gray-500 text-center py-8">Hozircha hech qanday banner mavjud emas.</p>
@@ -299,7 +299,7 @@ const BannerComponent = () => {
                   <div className='p-4'>
                     <p className="text-sm text-gray-300 font-medium mb-3">
                         Serial: <span className='text-blue-400 font-semibold'>
-                            {/* ✨ TUZATISH: banner.seriesTitle (yoki seriesId) ishlatilmoqda */}
+                            {/* âœ¨ TUZATISH: banner.seriesTitle (yoki seriesId) ishlatilmoqda */}
                             {banner.seriesTitle || (banner.seriesId ? `ID: ${banner.seriesId}` : 'Serial ma\'lumoti yo\'q')}
                         </span>
                     </p>
@@ -311,11 +311,11 @@ const BannerComponent = () => {
                         Tahrirlash
                       </button>
                       <button
-                        // ✨ TUZATISH: To'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
+                        // âœ¨ TUZATISH: To'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
                         onClick={() => handleDelete(banner.id, banner.seriesId)}
                         className="flex-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
                       >
-                        O‘chirish
+                        Oâ€˜chirish
                       </button>
                     </div>
                   </div>

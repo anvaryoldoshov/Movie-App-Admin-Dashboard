@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+﻿import React, { useState, useEffect, useRef } from "react";
 import {
   getAllSeries,
   getEpisodesBySeries,
@@ -420,7 +420,7 @@ const SeriesList = () => {
         onCancel={closeConfirm}
       />
       <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-indigo-400 tracking-wider border-b-2 border-indigo-500/50 pb-3">
-        Serial Kontentni Boshqarish Paneli 📺
+        Serial Kontentni Boshqarish Paneli ðŸ"º
       </h1>
       
       {/* Xabar Bandi */}
@@ -524,7 +524,7 @@ const SeriesList = () => {
                                 <span>{ep.episodeNumber}. {ep.title}</span>
                                 {(ep.durationHours || ep.durationMinutes || ep.durationSeconds) && (
                                   <span className="text-gray-500 text-xs ml-1">
-                                    ⏱{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
+                                    â±{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
                                   </span>
                                 )}
                             </span>
@@ -606,7 +606,7 @@ const SeriesList = () => {
                                         htmlFor={`episode-number-add-${s.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
-                                        Epizod № <span className="text-red-500">*</span>
+                                        Epizod â„– <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         id={`episode-number-add-${s.id}`}
