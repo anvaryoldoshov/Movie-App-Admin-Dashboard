@@ -725,7 +725,7 @@ const SeriesList = () => {
           onClick={(e) => e.target === e.currentTarget && (setEditSeries(null) || setEditEpisode(null))} // Click outside to close
           ref={modalRef}
         >
-          <div className="bg-gray-800 p-6 sm:p-8 rounded-xl w-full max-w-lg shadow-3xl border border-indigo-700/50 transform transition-all duration-300 max-h-[90vh] overflow-y-auto text-white">
+          <div className="bg-gray-800 p-6 sm:p-8 rounded-xl w-full max-w-2xl shadow-3xl border border-indigo-700/50 transform transition-all duration-300 max-h-[90vh] overflow-y-auto text-white">
             
             {/* Modal Sarlavha va Yopish */}
             <div className="flex justify-between items-center mb-6 border-b border-gray-700/50 pb-3">
@@ -881,87 +881,88 @@ const SeriesList = () => {
                   {formErrors.title && (<p className="text-red-400 text-xs mt-1">{formErrors.title}</p>)}
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {/* Episode Number */}
-                    <div>
-                        <label htmlFor="edit-episode-number" className="block text-sm font-medium text-gray-300 mb-2">
-                            Epizod Raqami <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="edit-episode-number"
-                            type="number"
-                            name="episodeNumber"
-                            value={formData.episodeNumber}
-                            onChange={handleInputChange}
-                            placeholder="Epizod raqami"
-                            className={`w-full p-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white ${formErrors.episodeNumber ? "border-red-500" : "border-gray-700"}`}
-                            aria-required="true"
-                        />
-                        {formErrors.episodeNumber && (<p className="text-red-400 text-xs mt-1">{formErrors.episodeNumber}</p>)}
-                    </div>
+                {/* Episode Number */}
+                <div>
+                    <label htmlFor="edit-episode-number" className="block text-sm font-medium text-gray-300 mb-2">
+                        Epizod Raqami <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        id="edit-episode-number"
+                        type="number"
+                        name="episodeNumber"
+                        value={formData.episodeNumber}
+                        onChange={handleInputChange}
+                        placeholder="Epizod raqami"
+                        className={`w-full p-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-base ${formErrors.episodeNumber ? "border-red-500" : "border-gray-700"}`}
+                        aria-required="true"
+                    />
+                    {formErrors.episodeNumber && (<p className="text-red-400 text-xs mt-1">{formErrors.episodeNumber}</p>)}
+                </div>
 
-                    {/* Duration */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Davomiyligi</label>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div>
-                                <input
-                                    type="number"
-                                    name="durationHours"
-                                    value={formData.durationHours}
-                                    onChange={handleInputChange}
-                                    placeholder="0"
-                                    min="0"
-                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
-                                />
-                                <span className="block text-center text-xs text-gray-500 mt-1">Soat</span>
-                            </div>
-                            <div>
-                                <input
-                                    type="number"
-                                    name="durationMinutes"
-                                    value={formData.durationMinutes}
-                                    onChange={handleInputChange}
-                                    placeholder="0"
-                                    min="0"
-                                    max="59"
-                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
-                                />
-                                <span className="block text-center text-xs text-gray-500 mt-1">Daqiqa</span>
-                            </div>
-                            <div>
-                                <input
-                                    type="number"
-                                    name="durationSeconds"
-                                    value={formData.durationSeconds}
-                                    onChange={handleInputChange}
-                                    placeholder="0"
-                                    min="0"
-                                    max="59"
-                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
-                                />
-                                <span className="block text-center text-xs text-gray-500 mt-1">Soniya</span>
-                            </div>
+                {/* Duration */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Davomiyligi (Soat : Daqiqa : Soniya)
+                    </label>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div>
+                            <input
+                                type="number"
+                                name="durationHours"
+                                value={formData.durationHours}
+                                onChange={handleInputChange}
+                                placeholder="0"
+                                min="0"
+                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
+                            />
+                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Soat</span>
+                        </div>
+                        <div>
+                            <input
+                                type="number"
+                                name="durationMinutes"
+                                value={formData.durationMinutes}
+                                onChange={handleInputChange}
+                                placeholder="0"
+                                min="0"
+                                max="59"
+                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
+                            />
+                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Daqiqa</span>
+                        </div>
+                        <div>
+                            <input
+                                type="number"
+                                name="durationSeconds"
+                                value={formData.durationSeconds}
+                                onChange={handleInputChange}
+                                placeholder="0"
+                                min="0"
+                                max="59"
+                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
+                            />
+                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Soniya</span>
                         </div>
                     </div>
+                </div>
 
-                    {/* Video URL */}
-                    <div>
-                        <label htmlFor="edit-video-url" className="block text-sm font-medium text-gray-300 mb-2">
-                            Video URL <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                            id="edit-video-url"
-                            type="text"
-                            name="videoUrl"
-                            value={formData.videoUrl}
-                            onChange={handleInputChange}
-                            placeholder="Video URL manzilini kiriting"
-                            className={`w-full p-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white ${formErrors.videoUrl ? "border-red-500" : "border-gray-700"}`}
-                            aria-required="true"
-                        />
-                        {formErrors.videoUrl && (<p className="text-red-400 text-xs mt-1">{formErrors.videoUrl}</p>)}
-                    </div>
+                {/* Video URL */}
+                <div>
+                    <label htmlFor="edit-video-url" className="block text-sm font-medium text-gray-300 mb-2">
+                        Video URL <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        id="edit-video-url"
+                        type="text"
+                        name="videoUrl"
+                        value={formData.videoUrl}
+                        onChange={handleInputChange}
+                        placeholder="Video URL manzilini kiriting"
+                        className={`w-full p-3 bg-gray-900 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-base ${formErrors.videoUrl ? "border-red-500" : "border-gray-700"}`}
+                        aria-required="true"
+                    />
+                    {formErrors.videoUrl && (<p className="text-red-400 text-xs mt-1">{formErrors.videoUrl}</p>)}
+                </div>
                 </div>
 
                 {/* Rasm Yuklash */}
