@@ -901,44 +901,47 @@ const SeriesList = () => {
                     </div>
 
                     {/* Duration */}
-                    <div className="grid grid-cols-3 gap-2">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Soat</label>
-                            <input
-                                type="number"
-                                name="durationHours"
-                                value={formData.durationHours}
-                                onChange={handleInputChange}
-                                placeholder="0"
-                                min="0"
-                                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Daqiqa</label>
-                            <input
-                                type="number"
-                                name="durationMinutes"
-                                value={formData.durationMinutes}
-                                onChange={handleInputChange}
-                                placeholder="45"
-                                min="0"
-                                max="59"
-                                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-2">Soniya</label>
-                            <input
-                                type="number"
-                                name="durationSeconds"
-                                value={formData.durationSeconds}
-                                onChange={handleInputChange}
-                                placeholder="30"
-                                min="0"
-                                max="59"
-                                className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white"
-                            />
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Davomiyligi</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div>
+                                <input
+                                    type="number"
+                                    name="durationHours"
+                                    value={formData.durationHours}
+                                    onChange={handleInputChange}
+                                    placeholder="0"
+                                    min="0"
+                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
+                                />
+                                <span className="block text-center text-xs text-gray-500 mt-1">Soat</span>
+                            </div>
+                            <div>
+                                <input
+                                    type="number"
+                                    name="durationMinutes"
+                                    value={formData.durationMinutes}
+                                    onChange={handleInputChange}
+                                    placeholder="0"
+                                    min="0"
+                                    max="59"
+                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
+                                />
+                                <span className="block text-center text-xs text-gray-500 mt-1">Daqiqa</span>
+                            </div>
+                            <div>
+                                <input
+                                    type="number"
+                                    name="durationSeconds"
+                                    value={formData.durationSeconds}
+                                    onChange={handleInputChange}
+                                    placeholder="0"
+                                    min="0"
+                                    max="59"
+                                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none shadow-inner text-white text-lg font-semibold text-center"
+                                />
+                                <span className="block text-center text-xs text-gray-500 mt-1">Soniya</span>
+                            </div>
                         </div>
                     </div>
 

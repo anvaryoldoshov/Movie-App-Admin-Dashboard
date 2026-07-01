@@ -91,7 +91,9 @@ api.interceptors.response.use(
 
       try {
         // console.log('Attempting token refresh with refreshToken:', refreshToken, 'and deviceId:', deviceId);
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken, deviceId });
+        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken, deviceId }, {
+            headers: { 'X-Device-Id': deviceId }
+          });
         const { token: newAccessToken, refreshToken: newRefreshToken, deviceId: responseDeviceId } = response.data;
         // console.log('Refresh token response:', response.data);
 
