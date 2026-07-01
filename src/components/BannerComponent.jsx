@@ -241,7 +241,7 @@ const BannerComponent = () => {
             {/* Rasm Preview */}
             {previewUrl && (
               <div className="col-span-1 lg:col-span-2">
-                <label className="block text-sm font-medium mb-2 text-gray-300">Rasm Koâ€˜rinishi</label>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Rasm Ko'rinishi</label>
                 <div className='w-full h-auto max-h-80 overflow-hidden rounded-xl border-4 border-gray-700 shadow-xl bg-gray-900'>
                     <img
                         src={previewUrl}
