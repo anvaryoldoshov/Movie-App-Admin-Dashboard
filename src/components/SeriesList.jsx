@@ -603,43 +603,39 @@ const SeriesList = () => {
                                     </div>
 
                                     {/* Duration */}
-                                    <div className="col-span-2 grid grid-cols-3 gap-2">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">Soat</label>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">Davomiyligi</label>
+                                        <div className="flex items-center gap-1">
                                             <input
                                                 type="number"
                                                 name="durationHours"
                                                 value={formData.durationHours}
                                                 onChange={handleInputChange}
-                                                placeholder="0"
+                                                placeholder="Soat"
                                                 min="0"
-                                                className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
+                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">Daqiqa</label>
+                                            <span className="text-gray-500 text-xs flex-shrink-0">:</span>
                                             <input
                                                 type="number"
                                                 name="durationMinutes"
                                                 value={formData.durationMinutes}
                                                 onChange={handleInputChange}
-                                                placeholder="45"
+                                                placeholder="Daq"
                                                 min="0"
                                                 max="59"
-                                                className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
+                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">Soniya</label>
+                                            <span className="text-gray-500 text-xs flex-shrink-0">:</span>
                                             <input
                                                 type="number"
                                                 name="durationSeconds"
                                                 value={formData.durationSeconds}
                                                 onChange={handleInputChange}
-                                                placeholder="30"
+                                                placeholder="Son"
                                                 min="0"
                                                 max="59"
-                                                className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
+                                                className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-xs"
                                             />
                                         </div>
                                     </div>
