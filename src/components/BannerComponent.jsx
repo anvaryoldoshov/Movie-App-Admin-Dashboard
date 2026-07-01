@@ -315,7 +315,7 @@ const BannerComponent = () => {
                         onClick={() => handleDelete(banner.id, banner.seriesId)}
                         className="flex-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
                       >
-                        Oâ€˜chirish
+                        O'chirish
                       </button>
                     </div>
                   </div>
