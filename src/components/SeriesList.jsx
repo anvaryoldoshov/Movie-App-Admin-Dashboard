@@ -420,7 +420,7 @@ const SeriesList = () => {
         onCancel={closeConfirm}
       />
       <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-indigo-400 tracking-wider border-b-2 border-indigo-500/50 pb-3">
-        Serial Kontentni Boshqarish Paneli ðŸ"º
+        Serial Kontentni Boshqarish Paneli
       </h1>
       
       {/* Xabar Bandi */}

@@ -177,7 +177,7 @@ const BannerComponent = () => {
         {/* Header */}
         <div className="mb-8 pt-4">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
-            {isEditing ? 'Banner Tahrirlash ðŸ› ï¸' : 'Yangi Banner Yaratish âœ¨'}
+            {isEditing ? 'Banner Tahrirlash ðŸ› ï¸' : 'Yangi Banner Yaratish'}
           </h1>
           <p className="text-gray-400 text-center mt-2">Seriallar uchun bannerlarni yuklang va boshqaring.</p>
         </div>
