@@ -529,25 +529,25 @@ const SeriesList = () => {
             {/* Epizodlar Ro'yxati va Qo'shish Tugmasi (Expanded qism) */}
             {expandedSeries === s.id && (
                 <div className="p-4 border-t border-gray-700/70 bg-gray-800/80">
-                    <h3 className="text-sm font-bold text-indigo-400 mb-3 flex items-center justify-between space-x-2">
-                        <span className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                        <h3 className="text-sm font-bold text-indigo-400 flex items-center space-x-2 whitespace-nowrap">
                           <List className="w-4 h-4"/>
                           <span>Epizodlar ({episodes[s.id]?.length || 0}):</span>
-                        </span>
+                        </h3>
                         <button
                             onClick={() => handleBackfillDurations(s.id)}
                             disabled={isBackfilling}
-                            className="flex items-center space-x-1 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-md text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex-shrink-0"
                             title="Hajmi/davomiyligi yozilmagan epizodlarni Bunny'dan qayta yuklash"
                         >
                             {isBackfilling ? (
-                              <Loader2 className="w-3 h-3 animate-spin" />
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
                             ) : (
-                              <Zap className="w-3 h-3" />
+                              <Zap className="w-3.5 h-3.5 text-yellow-400" />
                             )}
-                            <span>Hajm/davomiylikni yangilash</span>
+                            <span>Yangilash</span>
                         </button>
-                    </h3>
+                    </div>
 
                     {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
                     <div className="space-y-2 max-h-32 overflow-y-auto pr-1 mb-4 border-b border-gray-700/50 pb-3 custom-scrollbar">
