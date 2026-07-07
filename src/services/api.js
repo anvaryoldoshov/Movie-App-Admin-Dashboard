@@ -387,7 +387,7 @@ export const deleteEpisode = async (episodeId) => {
 // Davomiylik/hajmi hali Bunny'dan to'liq olinmagan epizodlarni qayta urinib to'ldiradi
 export const backfillEpisodeDurations = async () => {
   try {
-    const response = await api.post('/admin/episodes/backfill-duration');
+    const response = await api.post('/admin/series/episodes/backfill-duration');
     return response.data;
   } catch (error) {
     console.error('Backfill episode durations error:', error.response?.data || error.message);
