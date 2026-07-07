@@ -7,6 +7,7 @@ import {
   deleteEpisode,
   updateSeries,
   deleteSeries,
+  backfillEpisodeDurations,
 } from "../services/api";
 import Episode from "./Episode";
 import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus } from 'lucide-react';
@@ -43,6 +44,7 @@ const SeriesList = () => {
   const [formErrors, setFormErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
+  const [isBackfilling, setIsBackfilling] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
   const modalRef = useRef(null);
 
@@ -100,6 +102,24 @@ const SeriesList = () => {
     } catch (err) {
       setError("Failed to fetch episodes");
       console.error("Error fetching episodes:", err);
+    }
+  };
+
+  // Bunny'dan hali to'liq olinmagan davomiylik/hajm ma'lumotlarini qayta urinib to'ldiradi
+  const handleBackfillDurations = async (seriesId) => {
+    setIsBackfilling(true);
+    try {
+      const result = await backfillEpisodeDurations();
+      setError(null);
+      setSuccess(
+        `Yangilandi: ${result.updated}, muvaffaqiyatsiz: ${result.failed} (jami: ${result.total})`
+      );
+      setTimeout(() => setSuccess(null), 4000);
+      await fetchEpisodes(seriesId);
+    } catch (err) {
+      setError("Ma'lumotlarni yangilab bo'lmadi: " + (err.message || "Noma'lum xatolik"));
+    } finally {
+      setIsBackfilling(false);
     }
   };
 
@@ -509,11 +529,26 @@ const SeriesList = () => {
             {/* Epizodlar Ro'yxati va Qo'shish Tugmasi (Expanded qism) */}
             {expandedSeries === s.id && (
                 <div className="p-4 border-t border-gray-700/70 bg-gray-800/80">
-                    <h3 className="text-sm font-bold text-indigo-400 mb-3 flex items-center space-x-2">
-                        <List className="w-4 h-4"/>
-                        <span>Epizodlar ({episodes[s.id]?.length || 0}):</span>
+                    <h3 className="text-sm font-bold text-indigo-400 mb-3 flex items-center justify-between space-x-2">
+                        <span className="flex items-center space-x-2">
+                          <List className="w-4 h-4"/>
+                          <span>Epizodlar ({episodes[s.id]?.length || 0}):</span>
+                        </span>
+                        <button
+                            onClick={() => handleBackfillDurations(s.id)}
+                            disabled={isBackfilling}
+                            className="flex items-center space-x-1 px-2 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-md text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="Hajmi/davomiyligi yozilmagan epizodlarni Bunny'dan qayta yuklash"
+                        >
+                            {isBackfilling ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Zap className="w-3 h-3" />
+                            )}
+                            <span>Hajm/davomiylikni yangilash</span>
+                        </button>
                     </h3>
-                    
+
                     {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
                     <div className="space-y-2 max-h-32 overflow-y-auto pr-1 mb-4 border-b border-gray-700/50 pb-3 custom-scrollbar">
                       {episodes[s.id]?.length > 0 ? (
