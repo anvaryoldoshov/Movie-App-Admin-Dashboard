@@ -10,7 +10,7 @@ import ConfirmDialog from './ConfirmDialog';
 
 // ***************************************************************
 // BASE_URL server manzilini to'g'irlashni unutmang!
-const BASE_URL = 'http://62.84.177.49';
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://api.tarixiykinolar.uz';
 
 // Manzilni xavfsiz shakllantirish funksiyasi
 const getFullImageUrl = (imagePath) => {

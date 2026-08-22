@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
-const API_URL = "http://62.84.177.49";
+const API_URL = process.env.REACT_APP_API_URL || "https://api.tarixiykinolar.uz";
 
 // Get or generate deviceId
 let deviceId = localStorage.getItem("deviceId");

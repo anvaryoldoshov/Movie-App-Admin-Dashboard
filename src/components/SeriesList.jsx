@@ -16,7 +16,7 @@ import ConfirmDialog from './ConfirmDialog';
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return '';
-    const BASE_URL = 'http://62.84.177.49';
+    const BASE_URL = process.env.REACT_APP_API_URL || 'https://api.tarixiykinolar.uz';
     return `${BASE_URL}${imagePath}`;
 };
 
