@@ -484,6 +484,25 @@ export const pushNotification = async ({ title, body, sound, image }) => {
   }
 };
 
+export const testPushNotification = async ({ token, title, body, sound, image }) => {
+  try {
+    const formData = new FormData();
+    formData.append('token', token);
+    formData.append('title', title);
+    formData.append('body', body);
+    if (sound) formData.append('sound', sound);
+    if (image) formData.append('image', image);
+
+    const response = await api.post('/admin/notifications/test-push', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Test push notification error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Test push yuborishda xatolik';
+  }
+};
+
 export const getRecentSounds = async () => {
   try {
     const response = await api.get('/admin/notifications/sounds');

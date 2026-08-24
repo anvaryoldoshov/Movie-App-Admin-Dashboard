@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { pushNotification, getRecentSounds } from '../services/api';
+import { pushNotification, testPushNotification, getRecentSounds } from '../services/api';
 import NotificationPreview from './NotificationPreview';
 
 const SendNotification = () => {
@@ -14,6 +14,8 @@ const SendNotification = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [testToken, setTestToken] = useState('');
+  const [testSending, setTestSending] = useState(false);
 
   useEffect(() => {
     fetchRecentSounds();
@@ -69,6 +71,31 @@ const SendNotification = () => {
       setError(typeof err === 'string' ? err : 'Push-notification yuborishda xatolik yuz berdi.');
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleTestSend = async () => {
+    setError(null);
+    setSuccess(null);
+
+    if (!testToken.trim()) {
+      setError('Test uchun FCM tokenni kiriting.');
+      return;
+    }
+    if (!formData.title.trim() || !formData.body.trim()) {
+      setError('Sarlavha va matn majburiy.');
+      return;
+    }
+
+    setTestSending(true);
+    try {
+      await testPushNotification({ ...formData, token: testToken.trim() });
+      setSuccess('Test push shu tokenga yuborildi.');
+      setTimeout(() => setSuccess(null), 5000);
+    } catch (err) {
+      setError(typeof err === 'string' ? err : 'Test push yuborishda xatolik yuz berdi.');
+    } finally {
+      setTestSending(false);
     }
   };
 
@@ -187,6 +214,33 @@ const SendNotification = () => {
                 </div>
               </div>
             )}
+
+            {/* Test token */}
+            <div className="pt-2 border-t border-gray-700">
+              <label className="block text-sm font-medium mb-2 text-gray-300">
+                Test FCM token (ixtiyoriy)
+              </label>
+              <p className="text-xs text-gray-500 mb-2">
+                Barchaga yuborishdan oldin, faqat shu tokenga (masalan o'z telefoningizga) test push yuborib tekshirib ko'ring.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="text"
+                  value={testToken}
+                  onChange={(e) => setTestToken(e.target.value)}
+                  placeholder="FCM device token"
+                  className="flex-1 p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:ring-purple-500 focus:border-purple-500 shadow-inner"
+                />
+                <button
+                  type="button"
+                  onClick={handleTestSend}
+                  disabled={testSending}
+                  className="px-5 py-3 bg-purple-600 text-white font-semibold rounded-xl hover:bg-purple-700 transition duration-300 shadow-lg disabled:opacity-60 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {testSending ? 'Yuborilmoqda...' : 'Test yuborish'}
+                </button>
+              </div>
+            </div>
 
             {/* Tugma */}
             <div className="flex flex-wrap gap-4 pt-2">
