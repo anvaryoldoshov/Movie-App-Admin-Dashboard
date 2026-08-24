@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { pushNotification, getRecentSounds } from '../services/api';
+import NotificationPreview from './NotificationPreview';
 
 const SendNotification = () => {
   const [formData, setFormData] = useState({
@@ -73,7 +74,7 @@ const SendNotification = () => {
 
   return (
     <div className="bg-[#0f111a] min-h-screen p-4 sm:p-6 lg:p-8 lg:ml-64 text-white">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
 
         <div className="mb-8 pt-4">
           <h1 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
@@ -94,6 +95,8 @@ const SendNotification = () => {
             Xatolik: {error}
           </div>
         )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
         <div className="bg-[#1c1e2c] p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
@@ -196,6 +199,18 @@ const SendNotification = () => {
               </button>
             </div>
           </form>
+        </div>
+
+        {/* Mobil ko'rinish preview */}
+        <div className="bg-[#1c1e2c] p-6 rounded-xl shadow-2xl border border-gray-700 lg:sticky lg:top-6">
+          <h2 className="text-sm font-semibold text-gray-300 mb-4 text-center">Mobilkada qanday ko'rinadi</h2>
+          <NotificationPreview
+            title={formData.title}
+            body={formData.body}
+            imageUrl={previewUrl}
+          />
+        </div>
+
         </div>
       </div>
     </div>
