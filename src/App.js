@@ -10,6 +10,7 @@ import Sidebar from "./components/SideBar";
 import SeriesList from "./components/SeriesList";
 import Episode from "./components/Episode";
 import BannerComponent from "./components/BannerComponent";
+import SendNotification from "./components/SendNotification";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
             <ProtectedRoute path="/series-list" component={SeriesList} />
             <ProtectedRoute path="/banners-list" component={BannerComponent} />
             <ProtectedRoute path="/Episode-list" component={Episode} />
+            <ProtectedRoute path="/send-notification" component={SendNotification} />
             <Redirect to="/login" />
           </Switch>
         </Route>

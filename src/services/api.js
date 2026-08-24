@@ -464,4 +464,34 @@ export const getAllUsersWithAccess = async () => {
     const { data } = await api.get("/api/access/all-with-series");
     return data;
 }
+
+// NOTIFICATION FUNCTIONS
+export const pushNotification = async ({ title, body, sound, image }) => {
+  try {
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('body', body);
+    if (sound) formData.append('sound', sound);
+    if (image) formData.append('image', image);
+
+    const response = await api.post('/admin/notifications/push', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Push notification error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Push-notification yuborishda xatolik';
+  }
+};
+
+export const getRecentSounds = async () => {
+  try {
+    const response = await api.get('/admin/notifications/sounds');
+    return response.data;
+  } catch (error) {
+    console.error('Get recent sounds error:', error.response?.data || error.message);
+    return [];
+  }
+};
+
 export default api;

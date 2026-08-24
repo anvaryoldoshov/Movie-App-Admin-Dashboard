@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 // lucide-react ikonalaridan foydalanilgan
-import { Menu, X, MonitorPlay, Film, Users, LayoutList, Image, LogOut } from "lucide-react"; 
+import { Menu, X, MonitorPlay, Film, Users, LayoutList, Image, LogOut, Bell } from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +36,7 @@ const Sidebar = () => {
     { to: "/user-table", icon: Users, label: "Foydalanuvchilar ro‘yxati", color: "text-yellow-400" },
     { to: "/series-list", icon: LayoutList, label: "Seriallar ro‘yxati", color: "text-purple-400" },
     { to: "/banners-list", icon: Image, label: "Bannerlar boshqaruvi", color: "text-indigo-400" },
+    { to: "/send-notification", icon: Bell, label: "Notification yuborish", color: "text-pink-400" },
   ];
 
   // NavLink Componenti
