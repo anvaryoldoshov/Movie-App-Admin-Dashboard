@@ -117,7 +117,8 @@ const SeriesList = () => {
       setTimeout(() => setSuccess(null), 4000);
       await fetchEpisodes(seriesId);
     } catch (err) {
-      setError("Ma'lumotlarni yangilab bo'lmadi: " + (err.message || "Noma'lum xatolik"));
+      setError(typeof err === "string" ? err : "Ma'lumotlarni yangilab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsBackfilling(false);
     }
@@ -194,7 +195,8 @@ const SeriesList = () => {
           setSuccess("Series deleted successfully");
           setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-          setError("Failed to delete series: " + (err.message || "Unknown error"));
+          setError(typeof err === "string" ? err : "Serialni o'chirib bo'lmadi.");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           console.error("Error deleting series:", err);
         }
       },
@@ -270,7 +272,8 @@ const SeriesList = () => {
       setSuccess("Series updated successfully");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError("Failed to update series: " + (err.message || "Unknown error"));
+      setError(typeof err === "string" ? err : "Serialni yangilab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       console.error("Error updating series:", err);
     }
   };
@@ -314,7 +317,8 @@ const SeriesList = () => {
       setSuccess("Episode updated successfully");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError("Failed to update episode: " + (err.message || "Unknown error"));
+      setError(typeof err === "string" ? err : "Epizodni yangilab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       console.error("Error updating episode:", err);
     }
   };
@@ -337,7 +341,8 @@ const SeriesList = () => {
           setSuccess("Episode deleted successfully");
           setTimeout(() => setSuccess(null), 3000);
         } catch (err) {
-          setError("Failed to delete episode: " + (err.message || "Unknown error"));
+          setError(typeof err === "string" ? err : "Epizodni o'chirib bo'lmadi.");
+          window.scrollTo({ top: 0, behavior: "smooth" });
           console.error("Error deleting episode:", err);
         }
       },
@@ -383,7 +388,8 @@ const SeriesList = () => {
       setSuccess("Episode added successfully");
       setTimeout(() => setSuccess(null), 3000);
     } catch (err) {
-      setError("Failed to add episode: " + (err.message || "Unknown error"));
+      setError(typeof err === "string" ? err : "Epizod qo'shib bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
       console.error("Error adding episode:", err);
     }
   };
