@@ -11,6 +11,7 @@ import SeriesList from "./components/SeriesList";
 import Episode from "./components/Episode";
 import BannerComponent from "./components/BannerComponent";
 import SendNotification from "./components/SendNotification";
+import Statistics from "./components/Statistics";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <ProtectedRoute path="/banners-list" component={BannerComponent} />
             <ProtectedRoute path="/Episode-list" component={Episode} />
             <ProtectedRoute path="/send-notification" component={SendNotification} />
+            <ProtectedRoute path="/statistics" component={Statistics} />
             <Redirect to="/login" />
           </Switch>
         </Route>

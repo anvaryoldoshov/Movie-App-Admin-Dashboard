@@ -460,6 +460,16 @@ export const deleteAccessMovie = async (userId, movieId) => {
   return data;
 };
 
+export const getSeriesStatistics = async () => {
+  try {
+    const response = await api.get('/series/statistics');
+    return response.data;
+  } catch (error) {
+    console.error('Get series statistics error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Statistikani yuklashda xatolik';
+  }
+};
+
 export const getAllUsersWithAccess = async () => {
     const { data } = await api.get("/api/access/all-with-series");
     return data;
