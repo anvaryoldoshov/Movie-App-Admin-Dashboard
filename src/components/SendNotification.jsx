@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import { pushNotification, testPushNotification, getRecentSounds } from '../services/api';
 import NotificationPreview from './NotificationPreview';
+
+let extraFieldSeq = 0;
+const newExtraField = () => ({ id: ++extraFieldSeq, key: '', value: '' });
+
+const extraFieldsToObject = (fields) =>
+  fields.reduce((acc, { key, value }) => {
+    const k = key.trim();
+    if (k) acc[k] = value;
+    return acc;
+  }, {});
 
 const SendNotification = () => {
   const [formData, setFormData] = useState({
@@ -16,6 +27,7 @@ const SendNotification = () => {
   const [success, setSuccess] = useState(null);
   const [testToken, setTestToken] = useState('');
   const [testSending, setTestSending] = useState(false);
+  const [extraFields, setExtraFields] = useState([]);
 
   useEffect(() => {
     fetchRecentSounds();
@@ -46,7 +58,15 @@ const SendNotification = () => {
   const resetForm = () => {
     setFormData({ title: '', body: '', sound: '', image: null });
     setPreviewUrl(null);
+    setExtraFields([]);
   };
+
+  const addExtraField = () => setExtraFields([...extraFields, newExtraField()]);
+
+  const removeExtraField = (id) => setExtraFields(extraFields.filter((f) => f.id !== id));
+
+  const updateExtraField = (id, prop, value) =>
+    setExtraFields(extraFields.map((f) => (f.id === id ? { ...f, [prop]: value } : f)));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,7 +80,7 @@ const SendNotification = () => {
 
     setSending(true);
     try {
-      const result = await pushNotification(formData);
+      const result = await pushNotification({ ...formData, data: extraFieldsToObject(extraFields) });
       setSuccess(
         `Yuborildi! Muvaffaqiyatli: ${result.success ?? 0}, Xato: ${result.failed ?? 0}`
       );
@@ -89,7 +109,7 @@ const SendNotification = () => {
 
     setTestSending(true);
     try {
-      await testPushNotification({ ...formData, token: testToken.trim() });
+      await testPushNotification({ ...formData, token: testToken.trim(), data: extraFieldsToObject(extraFields) });
       setSuccess('Test push shu tokenga yuborildi.');
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
@@ -214,6 +234,56 @@ const SendNotification = () => {
                 </div>
               </div>
             )}
+
+            {/* Qo'shimcha ma'lumotlar (data) */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Qo'shimcha ma'lumotlar (data)
+                </label>
+                <button
+                  type="button"
+                  onClick={addExtraField}
+                  className="flex items-center gap-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium"
+                >
+                  <Plus size={14} /> Qo'shish
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mb-3">
+                Ilova qabul qilishi kerak bo'lgan qo'shimcha key-value juftliklari (masalan: type, order_id, user_id).
+              </p>
+
+              {extraFields.length > 0 && (
+                <div className="space-y-2">
+                  {extraFields.map((field) => (
+                    <div key={field.id} className="flex gap-2">
+                      <input
+                        type="text"
+                        value={field.key}
+                        onChange={(e) => updateExtraField(field.id, 'key', e.target.value)}
+                        placeholder="key (masalan: order_id)"
+                        className="flex-1 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 shadow-inner"
+                      />
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={(e) => updateExtraField(field.id, 'value', e.target.value)}
+                        placeholder="value (masalan: 123)"
+                        className="flex-1 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg text-white text-sm focus:ring-indigo-500 focus:border-indigo-500 shadow-inner"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeExtraField(field.id)}
+                        className="px-3 bg-red-600/80 text-white rounded-lg hover:bg-red-700 transition shrink-0"
+                        aria-label="O'chirish"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             {/* Test token */}
             <div className="pt-2 border-t border-gray-700">

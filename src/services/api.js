@@ -466,13 +466,14 @@ export const getAllUsersWithAccess = async () => {
 }
 
 // NOTIFICATION FUNCTIONS
-export const pushNotification = async ({ title, body, sound, image }) => {
+export const pushNotification = async ({ title, body, sound, image, data }) => {
   try {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('body', body);
     if (sound) formData.append('sound', sound);
     if (image) formData.append('image', image);
+    if (data && Object.keys(data).length > 0) formData.append('data', JSON.stringify(data));
 
     const response = await api.post('/admin/notifications/push', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -484,7 +485,7 @@ export const pushNotification = async ({ title, body, sound, image }) => {
   }
 };
 
-export const testPushNotification = async ({ token, title, body, sound, image }) => {
+export const testPushNotification = async ({ token, title, body, sound, image, data }) => {
   try {
     const formData = new FormData();
     formData.append('token', token);
@@ -492,6 +493,7 @@ export const testPushNotification = async ({ token, title, body, sound, image })
     formData.append('body', body);
     if (sound) formData.append('sound', sound);
     if (image) formData.append('image', image);
+    if (data && Object.keys(data).length > 0) formData.append('data', JSON.stringify(data));
 
     const response = await api.post('/admin/notifications/test-push', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
