@@ -405,6 +405,34 @@ export const backfillEpisodeDurations = async () => {
   }
 };
 
+// Admin videolarni oldindan Bunny'ga yuklab qo'yganda, hali epizodga biriktirilmagan
+// videoning URL'ini (va serial Collection'ga bog'langan bo'lsa, epizod raqamini ham)
+// taklif qiladi. Topilmasa {videoUrl: null, episodeNumber: null} qaytadi.
+export const getNextVideoUrl = async (seriesId) => {
+  try {
+    const response = await api.get(`/admin/series/${seriesId}/episodes/next-video`);
+    return {
+      videoUrl: response.data?.videoUrl || null,
+      episodeNumber: response.data?.episodeNumber ?? null,
+    };
+  } catch (error) {
+    console.error('Get next video URL error:', error.response?.data || error.message);
+    return { videoUrl: null, episodeNumber: null };
+  }
+};
+
+// Serialga biriktirilgan Bunny Collection ichidagi hali import qilinmagan barcha
+// videolarni bitta so'rovda epizod sifatida yaratadi
+export const importEpisodesFromBunny = async (seriesId) => {
+  try {
+    const response = await api.post(`/admin/series/${seriesId}/episodes/import-from-bunny`);
+    return response.data;
+  } catch (error) {
+    console.error('Import episodes from Bunny error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Bunny'dan import qilishda xatolik";
+  }
+};
+
 export const updateUser = async (id, userData) => {
   try {
     const response = await api.put(`/users/${id}`, userData);

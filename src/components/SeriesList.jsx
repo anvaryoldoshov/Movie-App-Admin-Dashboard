@@ -11,6 +11,8 @@ import {
   backfillEpisodeDurations,
   getGenres,
   reorderSeries,
+  getNextVideoUrl,
+  importEpisodesFromBunny,
 } from "../services/api";
 import Episode from "./Episode";
 import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift } from 'lucide-react';
@@ -42,6 +44,7 @@ const SeriesList = () => {
     quarterlyPrice: "",
     genreIds: [],
     freeEpisodesCount: "",
+    bunnyCollectionId: "",
   });
   const [genres, setGenres] = useState([]);
   const [error, setError] = useState(null);
@@ -51,6 +54,7 @@ const SeriesList = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
+  const [isImportingBunny, setIsImportingBunny] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -215,6 +219,33 @@ const SeriesList = () => {
     }
   };
 
+  // Serialga biriktirilgan Bunny Collection ichidagi hali import qilinmagan barcha
+  // videolarni bitta so'rovda epizod sifatida yaratadi
+  const handleImportFromBunny = async (seriesId) => {
+    setIsImportingBunny(true);
+    try {
+      const result = await importEpisodesFromBunny(seriesId);
+      setError(null);
+      if (result.error) {
+        setError(result.error);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        setSuccess(
+          `Bunny'dan import qilindi: ${result.imported} ta epizod qo'shildi` +
+          (result.skippedAlreadyUsed ? `, ${result.skippedAlreadyUsed} ta allaqachon mavjud edi` : "") +
+          (result.skippedNoNumber ? `, ${result.skippedNoNumber} ta videoda raqam topilmadi` : "")
+        );
+        setTimeout(() => setSuccess(null), 6000);
+      }
+      await fetchEpisodes(seriesId);
+    } catch (err) {
+      setError(typeof err === "string" ? err : "Bunny'dan import qilib bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } finally {
+      setIsImportingBunny(false);
+    }
+  };
+
   // Original handleSeriesClick
   const handleSeriesClick = (seriesId) => {
     if (expandedSeries === seriesId) {
@@ -241,6 +272,7 @@ const SeriesList = () => {
       quarterlyPrice: series.quarterlyPrice != null ? String(series.quarterlyPrice) : "",
       genreIds: (series.genres || []).map((g) => g.id),
       freeEpisodesCount: series.freeEpisodesCount != null ? String(series.freeEpisodesCount) : "",
+      bunnyCollectionId: series.bunnyCollectionId || "",
     });
     setImagePreview(getFullImageUrl(series.imagePath));
     setFormErrors({});
@@ -342,6 +374,7 @@ const SeriesList = () => {
     if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
     if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
     if (formData.freeEpisodesCount) form.append("freeEpisodesCount", formData.freeEpisodesCount);
+    if (formData.bunnyCollectionId) form.append("bunnyCollectionId", formData.bunnyCollectionId);
     (formData.genreIds || []).forEach((id) => form.append("genreIds", id));
     if (formData.image) {
       form.append("image", formData.image);
@@ -363,6 +396,7 @@ const SeriesList = () => {
         quarterlyPrice: "",
         genreIds: [],
         freeEpisodesCount: "",
+        bunnyCollectionId: "",
       });
       setImagePreview(null);
       setError(null);
@@ -457,6 +491,23 @@ const SeriesList = () => {
     };
   };
 
+  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL maydoniga
+  // qo'yadi. Agar serial Bunny Collection'ga bog'langan bo'lsa, video nomidagi raqam
+  // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
+  const suggestVideoUrl = (seriesId) => {
+    getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
+      if (!videoUrl) return;
+      const s = series.find((item) => item.id === seriesId);
+      setFormData((prev) => ({
+        ...prev,
+        videoUrl,
+        ...(episodeNumber != null
+          ? { episodeNumber: String(episodeNumber), title: s ? `${s.title} - ${episodeNumber}-qism` : prev.title }
+          : {}),
+      }));
+    });
+  };
+
   // Original handleAddEpisode
   const handleAddEpisode = async (e, seriesId) => {
     e.preventDefault();
@@ -495,6 +546,7 @@ const SeriesList = () => {
       setError(null);
       setSuccess("Episode added successfully");
       setTimeout(() => setSuccess(null), 3000);
+      suggestVideoUrl(seriesId);
     } catch (err) {
       setError(typeof err === "string" ? err : "Epizod qo'shib bo'lmadi.");
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -525,6 +577,7 @@ const SeriesList = () => {
           });
           setImagePreview(null);
           setFormErrors({});
+          suggestVideoUrl(seriesId);
       }
   };
 
@@ -705,6 +758,21 @@ const SeriesList = () => {
                             )}
                             <span>Hajm/davomiylikni yangilash</span>
                         </button>
+                        {s.bunnyCollectionId && (
+                            <button
+                                onClick={() => handleImportFromBunny(s.id)}
+                                disabled={isImportingBunny}
+                                className="mt-2 ml-2 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-full text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap w-fit"
+                                title="Bunny Collection'dagi hali import qilinmagan barcha videolarni epizod sifatida yaratadi"
+                            >
+                                {isImportingBunny ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Video className="w-3.5 h-3.5 text-blue-300" />
+                                )}
+                                <span>Bunny'dan barcha epizodlarni import qilish</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
@@ -885,6 +953,7 @@ const SeriesList = () => {
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                         Video URL <span className="text-red-500">*</span>
+                                        <span className="normal-case text-gray-500"> — Bunny'ga yuklangan bo'lsa avtomatik taklif qilinadi</span>
                                     </label>
                                     <input
                                         id={`video-url-add-${s.id}`}
@@ -1073,6 +1142,23 @@ const SeriesList = () => {
                     value={formData.freeEpisodesCount}
                     onChange={handleInputChange}
                     placeholder="Masalan: 5 (birinchi 5 ta epizod obunasiz ochiq)"
+                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                  />
+                </div>
+
+                {/* Bunny Collection ID */}
+                <div>
+                  <label htmlFor="series-bunny-collection" className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                    <Video className="w-4 h-4 text-blue-400" />
+                    Bunny Collection ID <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                  </label>
+                  <input
+                    id="series-bunny-collection"
+                    type="text"
+                    name="bunnyCollectionId"
+                    value={formData.bunnyCollectionId}
+                    onChange={handleInputChange}
+                    placeholder="Collection ID yoki Bunny dashboard havolasini joylashtiring"
                     className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
                   />
                 </div>

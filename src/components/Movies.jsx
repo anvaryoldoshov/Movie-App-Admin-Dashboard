@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { getSeries, getEpisodesBySeries, createEpisode } from "../services/api";
+import { getSeries, getEpisodesBySeries, createEpisode, getNextVideoUrl } from "../services/api";
 import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
 
 const LAST_SERIES_ID_KEY = "movieapp_last_episode_series_id";
@@ -56,6 +56,23 @@ const Movies = () => {
     }));
   };
 
+  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL maydoniga
+  // qo'yadi. Agar serial Bunny Collection'ga bog'langan bo'lsa, video nomidagi raqam
+  // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
+  const suggestVideoUrl = (seriesId) => {
+    getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
+      if (!videoUrl) return;
+      const series = seriesList.find((s) => String(s.id) === String(seriesId));
+      setNewEpisode((prev) => ({
+        ...prev,
+        videoUrl,
+        ...(episodeNumber != null
+          ? { episodeNumber: String(episodeNumber), title: series ? `${series.title} - ${episodeNumber}-qism` : prev.title }
+          : {}),
+      }));
+    });
+  };
+
   useEffect(() => {
     setEpisodes([]);
     if (!selectedSeriesId) return;
@@ -63,6 +80,7 @@ const Movies = () => {
       .then((data) => {
         setEpisodes(data);
         applyDefaults(data, selectedSeriesId);
+        suggestVideoUrl(selectedSeriesId);
       })
       .catch((e) => setError("Episodlarni olishda xato: " + e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -93,9 +111,10 @@ const Movies = () => {
       setEpisodes(updatedEpisodes);
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
-      // Formani tozalash, keyingi epizod uchun nom/raqamni avtomatik taklif qilish
+      // Formani tozalash, keyingi epizod uchun nom/raqam/video URL avtomatik taklif qilish
       setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "" });
       applyDefaults(updatedEpisodes, selectedSeriesId);
+      suggestVideoUrl(selectedSeriesId);
       setThumbFile(null);
     } catch (err) {
       console.error(err);
@@ -260,7 +279,7 @@ const Movies = () => {
           {/* Video Link */}
           <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
-              Video URL:
+              Video URL: <span className="text-gray-500 text-xs">(Bunny'ga oldindan yuklangan bo'lsa, avtomatik taklif qilinadi)</span>
               </label>
               <div className="relative">
                   <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500" />

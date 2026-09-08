@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createSeries, createSeason, getGenres } from "../services/api";
-import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
+import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers, Video } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
 
 let seasonRowKeySeq = 0;
 const emptySeasonRow = () => ({ key: seasonRowKeySeq++, seasonNumber: "", episodeCount: "", title: "" });
@@ -11,6 +11,7 @@ const CreateSeries = () => {
   const [monthlyPrice, setMonthlyPrice] = useState("");
   const [quarterlyPrice, setQuarterlyPrice] = useState("");
   const [freeEpisodesCount, setFreeEpisodesCount] = useState("");
+  const [bunnyCollectionId, setBunnyCollectionId] = useState("");
   const [seasonRows, setSeasonRows] = useState([{ ...emptySeasonRow(), seasonNumber: "1" }]);
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
@@ -55,6 +56,7 @@ const CreateSeries = () => {
       if (monthlyPrice) formData.append("monthlyPrice", monthlyPrice);
       if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
       if (freeEpisodesCount) formData.append("freeEpisodesCount", freeEpisodesCount);
+      if (bunnyCollectionId) formData.append("bunnyCollectionId", bunnyCollectionId);
       selectedGenreIds.forEach((id) => formData.append("genreIds", id));
       formData.append("image", image);
 
@@ -83,6 +85,7 @@ const CreateSeries = () => {
       setMonthlyPrice("");
       setQuarterlyPrice("");
       setFreeEpisodesCount("");
+      setBunnyCollectionId("");
       setSeasonRows([{ ...emptySeasonRow(), seasonNumber: "1" }]);
       setSelectedGenreIds([]);
     } catch (error) {
@@ -187,6 +190,24 @@ const CreateSeries = () => {
               onChange={(e) => setFreeEpisodesCount(e.target.value)}
               placeholder="Masalan: 5 (birinchi 5 ta epizod obunasiz ochiq bo'ladi)"
             />
+          </div>
+
+          {/* Bunny Collection ID */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
+              <Video className="w-4 h-4 text-blue-400" />
+              Bunny Collection ID: <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+            </label>
+            <input
+              type="text"
+              className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+              value={bunnyCollectionId}
+              onChange={(e) => setBunnyCollectionId(e.target.value)}
+              placeholder="Collection ID yoki Bunny dashboard havolasini joylashtiring"
+            />
+            <p className="text-gray-500 text-xs mt-1">
+              Agar bu serialning videolari Bunny'da alohida Collection'ga yuklangan bo'lsa, shu yerga qo'ying — epizod qo'shishda video va raqam avtomatik taklif qilinadi, "Seriallar ro'yxati"da esa bir bosishda hammasini import qilish mumkin bo'ladi.
+            </p>
           </div>
 
           {/* Seasons pre-definition */}
