@@ -9,9 +9,10 @@ import {
   deleteSeries,
   backfillEpisodeDurations,
   getGenres,
+  reorderSeries,
 } from "../services/api";
 import Episode from "./Episode";
-import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus } from 'lucide-react';
+import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
@@ -49,6 +50,8 @@ const SeriesList = () => {
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
   const modalRef = useRef(null);
 
   // --- LOGIKA: ORIGINAL KODDAN O'ZGARIShSIZ SAQLANGAN ---
@@ -81,6 +84,59 @@ const SeriesList = () => {
         ? prev.genreIds.filter((g) => g !== id)
         : [...prev.genreIds, id],
     }));
+  };
+
+  // Seriallarni qo'lda tortib (drag & drop) tartibini o'zgartirish
+  const handleDragStart = (e, id) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = "move";
+    try {
+      e.dataTransfer.setData("text/plain", String(id));
+    } catch (err) {
+      // ba'zi brauzerlarda setData shart emas
+    }
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (draggedId !== null && id !== draggedId) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  const handleDrop = async (e, targetId) => {
+    e.preventDefault();
+    const sourceId = draggedId;
+    setDraggedId(null);
+    setDragOverId(null);
+
+    if (!sourceId || sourceId === targetId) return;
+
+    const sourceIndex = series.findIndex((s) => s.id === sourceId);
+    const targetIndex = series.findIndex((s) => s.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const reordered = [...series];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    const previousOrder = series;
+    setSeries(reordered);
+
+    try {
+      await reorderSeries(reordered.map((s) => s.id));
+      setError(null);
+    } catch (err) {
+      setSeries(previousOrder);
+      setError(typeof err === "string" ? err : "Tartibni saqlab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   // Original useEffect (escape key)
@@ -465,9 +521,14 @@ const SeriesList = () => {
         onConfirm={confirmDialog.onConfirm}
         onCancel={closeConfirm}
       />
-      <h1 className="text-3xl sm:text-4xl font-extrabold mb-10 text-center text-indigo-400 tracking-wider border-b-2 border-indigo-500/50 pb-3">
+      <h1 className="text-3xl sm:text-4xl font-extrabold mb-2 text-center text-indigo-400 tracking-wider">
         Serial Kontentni Boshqarish Paneli
       </h1>
+      <p className="text-center text-gray-500 text-sm mb-8 flex items-center justify-center gap-1.5">
+        <GripVertical className="w-4 h-4" />
+        Tartibni o'zgartirish uchun sarlavha oldidagi tutqichni ushlab torting
+      </p>
+      <div className="border-b-2 border-indigo-500/50 mb-8" />
       
       {/* Xabar Bandi */}
       {error && (
@@ -488,7 +549,13 @@ const SeriesList = () => {
         {series.map((s) => (
           <div
             key={s.id}
-            className="bg-gray-800 shadow-2xl rounded-xl overflow-hidden border border-gray-700/70 transition duration-300 hover:shadow-indigo-500/30 flex flex-col group"
+            onDragOver={(e) => handleDragOver(e, s.id)}
+            onDrop={(e) => handleDrop(e, s.id)}
+            className={`bg-gray-800 shadow-2xl rounded-xl overflow-hidden border transition duration-300 hover:shadow-indigo-500/30 flex flex-col group ${
+              draggedId === s.id ? "opacity-40" : ""
+            } ${
+              dragOverId === s.id ? "border-indigo-500 ring-2 ring-indigo-500/60" : "border-gray-700/70"
+            }`}
           >
             {/* Rasm va Kengaytirish Tugmasi */}
             <div 
@@ -511,9 +578,20 @@ const SeriesList = () => {
             
             {/* Ma'lumot va Boshqaruv */}
             <div className="p-4 flex flex-col flex-grow">
-              <h2 className="text-lg font-bold text-white mb-2 truncate" title={s.title}>
-                {s.title}
-              </h2>
+              <div className="flex items-center gap-2 mb-2">
+                <span
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, s.id)}
+                  onDragEnd={handleDragEnd}
+                  className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 flex-shrink-0"
+                  title="Ushlab tortib o'rnini almashtirish"
+                >
+                  <GripVertical className="w-4 h-4" />
+                </span>
+                <h2 className="text-lg font-bold text-white truncate flex-1" title={s.title}>
+                  {s.title}
+                </h2>
+              </div>
               <div className="flex items-center space-x-2 text-sm">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${
                       s.status === 'PUBLISHED' ? 'bg-green-600/20 text-green-400' :

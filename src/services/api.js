@@ -340,6 +340,16 @@ export const updateSeries = async (seriesId, formData) => {
   }
 };
 
+export const reorderSeries = async (orderedIds) => {
+  try {
+    const response = await api.put('/series/reorder', orderedIds);
+    return response.data;
+  } catch (error) {
+    console.error('Reorder series error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Seriallar tartibini o'zgartirib bo'lmadi";
+  }
+};
+
 export const deleteSeries = async (seriesId) => {
   try {
     const response = await api.delete(`/series/delete/${seriesId}`);
