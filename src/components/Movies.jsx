@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { getSeries, getEpisodesBySeries, createEpisode } from "../services/api";
-import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
+import { getSeries, getEpisodesBySeries, createEpisode, getSeasonsBySeries } from "../services/api";
+import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
 
 const Movies = () => {
   const [seriesList, setSeriesList] = useState([]);
-  const [episodes, setEpisodes] = useState([]); 
+  const [episodes, setEpisodes] = useState([]);
+  const [seasons, setSeasons] = useState([]);
   const [selectedSeriesId, setSelectedSeriesId] = useState("");
   const [newEpisode, setNewEpisode] = useState({
     title: "",
@@ -13,6 +14,8 @@ const Movies = () => {
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
+    seasonId: "",
+    free: false,
   });
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
@@ -28,11 +31,16 @@ const Movies = () => {
   }, []);
 
   useEffect(() => {
-    setEpisodes([]); 
+    setEpisodes([]);
+    setSeasons([]);
+    setNewEpisode((prev) => ({ ...prev, seasonId: "" }));
     if (!selectedSeriesId) return;
     getEpisodesBySeries(selectedSeriesId)
       .then(setEpisodes)
       .catch((e) => setError("Episodlarni olishda xato: " + e.message));
+    getSeasonsBySeries(selectedSeriesId)
+      .then(setSeasons)
+      .catch(() => setSeasons([]));
   }, [selectedSeriesId]);
 
   const handleCreate = async (e) => {
@@ -52,6 +60,8 @@ const Movies = () => {
     if (newEpisode.durationHours) formData.append("durationHours", newEpisode.durationHours);
     if (newEpisode.durationMinutes) formData.append("durationMinutes", newEpisode.durationMinutes);
     if (newEpisode.durationSeconds) formData.append("durationSeconds", newEpisode.durationSeconds);
+    if (newEpisode.seasonId) formData.append("seasonId", newEpisode.seasonId);
+    formData.append("free", newEpisode.free);
     formData.append("image", thumbFile);
 
     try {
@@ -60,7 +70,7 @@ const Movies = () => {
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
       // Reset form
-      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "" });
+      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "", seasonId: newEpisode.seasonId, free: false });
       setThumbFile(null);
     } catch (err) {
       console.error(err);
@@ -170,6 +180,45 @@ const Movies = () => {
                 />
             </div>
           </div>
+
+          {/* Season select */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Fasl: <span className="text-gray-500 text-xs">(tanlanmasa avtomatik 1-faslga qo'shiladi)</span>
+            </label>
+            <div className="relative">
+              <select
+                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner cursor-pointer"
+                value={newEpisode.seasonId}
+                onChange={(e) => setNewEpisode({ ...newEpisode, seasonId: e.target.value })}
+                disabled={!selectedSeriesId}
+              >
+                <option value="" className="bg-[#1c1e2c]">
+                  {seasons.length === 0 ? "-- Fasllar mavjud emas (1-fasl yaratiladi) --" : "-- Fasl tanlang --"}
+                </option>
+                {seasons.map((s) => (
+                  <option key={s.id} value={s.id} className="bg-[#1c1e2c]">
+                    {s.title || `${s.seasonNumber}-fasl`}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Free/bonus episode toggle */}
+          <label className="flex items-center gap-3 p-3 bg-[#0f111a] border border-gray-600 rounded-lg cursor-pointer">
+            <input
+              type="checkbox"
+              checked={newEpisode.free}
+              onChange={(e) => setNewEpisode({ ...newEpisode, free: e.target.checked })}
+              className="w-4 h-4 accent-yellow-500"
+            />
+            <Gift className="w-5 h-5 text-yellow-400" />
+            <span className="text-sm text-gray-300">
+              Bonus epizod — obunasiz ham hamma tomosha qila oladi
+            </span>
+          </label>
 
           {/* Duration */}
           <div>

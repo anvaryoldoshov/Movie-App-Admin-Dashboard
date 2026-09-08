@@ -10,9 +10,12 @@ import {
   backfillEpisodeDurations,
   getGenres,
   reorderSeries,
+  getSeasonsBySeries,
+  createSeason,
+  deleteSeason,
 } from "../services/api";
 import Episode from "./Episode";
-import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
+import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift, Layers } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
@@ -40,8 +43,13 @@ const SeriesList = () => {
     monthlyPrice: "",
     quarterlyPrice: "",
     genreIds: [],
+    seasonId: "",
+    free: false,
   });
   const [genres, setGenres] = useState([]);
+  const [seasons, setSeasons] = useState({});
+  const [seasonInput, setSeasonInput] = useState({ seasonNumber: "", title: "" });
+  const [seasonError, setSeasonError] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -194,6 +202,49 @@ const SeriesList = () => {
     }
   };
 
+  const fetchSeasons = async (seriesId) => {
+    try {
+      const data = await getSeasonsBySeries(seriesId);
+      setSeasons((prev) => ({ ...prev, [seriesId]: data }));
+    } catch (err) {
+      console.error("Error fetching seasons:", err);
+    }
+  };
+
+  const handleAddSeason = async (e, seriesId) => {
+    e.preventDefault();
+    if (!seasonInput.seasonNumber) return;
+    try {
+      const created = await createSeason(seriesId, Number(seasonInput.seasonNumber), seasonInput.title || null);
+      setSeasons((prev) => ({ ...prev, [seriesId]: [...(prev[seriesId] || []), created] }));
+      setSeasonInput({ seasonNumber: "", title: "" });
+      setSeasonError(null);
+    } catch (err) {
+      setSeasonError(typeof err === "string" ? err : "Fasl qo'shib bo'lmadi.");
+    }
+  };
+
+  const handleDeleteSeason = (seasonId, seriesId) => {
+    setConfirmDialog({
+      isOpen: true, type: 'danger',
+      title: "Faslni o'chirish",
+      message: "Haqiqatan ham ushbu faslni o'chirmoqchimisiz? (Faqat epizodi bo'lmagan fasllarni o'chirish mumkin)",
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          await deleteSeason(seasonId);
+          setSeasons((prev) => ({
+            ...prev,
+            [seriesId]: (prev[seriesId] || []).filter((s) => s.id !== seasonId),
+          }));
+          setSeasonError(null);
+        } catch (err) {
+          setSeasonError(typeof err === "string" ? err : "Faslni o'chirib bo'lmadi.");
+        }
+      },
+    });
+  };
+
   // Bunny'dan hali to'liq olinmagan davomiylik/hajm ma'lumotlarini qayta urinib to'ldiradi
   const handleBackfillDurations = async (seriesId) => {
     setIsBackfilling(true);
@@ -221,8 +272,13 @@ const SeriesList = () => {
     } else {
       setExpandedSeries(seriesId);
       setAddEpisodeSeriesId(null);
+      setSeasonInput({ seasonNumber: "", title: "" });
+      setSeasonError(null);
       if (!episodes[seriesId]) {
         fetchEpisodes(seriesId);
+      }
+      if (!seasons[seriesId]) {
+        fetchSeasons(seriesId);
       }
     }
   };
@@ -255,6 +311,8 @@ const SeriesList = () => {
       durationMinutes: episode.durationMinutes || "",
       durationSeconds: episode.durationSeconds || "",
       image: null,
+      seasonId: episode.seasonId || "",
+      free: !!episode.free,
     });
     setImagePreview(
       episode.imagePath ? getFullImageUrl(episode.imagePath) : null
@@ -382,6 +440,8 @@ const SeriesList = () => {
     if (formData.durationHours) form.append("durationHours", formData.durationHours);
     if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
     if (formData.durationSeconds) form.append("durationSeconds", formData.durationSeconds);
+    if (formData.seasonId) form.append("seasonId", formData.seasonId);
+    form.append("free", formData.free);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -403,6 +463,8 @@ const SeriesList = () => {
         status: "",
         monthlyPrice: "",
         quarterlyPrice: "",
+        seasonId: "",
+        free: false,
       });
       setImagePreview(null);
       setError(null);
@@ -453,6 +515,8 @@ const SeriesList = () => {
     if (formData.durationHours) form.append("durationHours", formData.durationHours);
     if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
     if (formData.durationSeconds) form.append("durationSeconds", formData.durationSeconds);
+    if (formData.seasonId) form.append("seasonId", formData.seasonId);
+    form.append("free", formData.free);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -463,7 +527,9 @@ const SeriesList = () => {
         ...prev,
         [seriesId]: [...(prev[seriesId] || []), newEpisode],
       }));
-      
+      // Yangi epizod avtomatik yaratilgan "1-fasl"ga tushgan bo'lishi mumkin - fasllar ro'yxatini yangilaymiz
+      fetchSeasons(seriesId);
+
       // Qo'shishdan keyin formani yopish va tozalash
       setAddEpisodeSeriesId(null);
       setFormData({
@@ -474,6 +540,8 @@ const SeriesList = () => {
         status: "",
         monthlyPrice: "",
         quarterlyPrice: "",
+        seasonId: formData.seasonId,
+        free: false,
       });
       setImagePreview(null);
       setError(null);
@@ -505,6 +573,8 @@ const SeriesList = () => {
             status: "",
             monthlyPrice: "",
             quarterlyPrice: "",
+            seasonId: "",
+            free: false,
           });
           setImagePreview(null);
           setFormErrors({});
@@ -690,6 +760,62 @@ const SeriesList = () => {
                         </button>
                     </div>
 
+                    {/* FASLLAR (SEASONS) BOSHQARUVI */}
+                    <div className="mb-4 border-b border-gray-700/50 pb-3">
+                      <h3 className="text-sm font-bold text-orange-400 flex items-center space-x-2 mb-2">
+                        <Layers className="w-4 h-4" />
+                        <span>Fasllar ({seasons[s.id]?.length || 0}):</span>
+                      </h3>
+                      {seasonError && (
+                        <p className="text-red-400 text-xs mb-2">{seasonError}</p>
+                      )}
+                      <div className="flex flex-wrap gap-1.5 mb-2">
+                        {(seasons[s.id] || []).map((season) => (
+                          <span
+                            key={season.id}
+                            className="flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-orange-600/20 text-orange-300"
+                          >
+                            {season.title || `${season.seasonNumber}-fasl`}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSeason(season.id, s.id)}
+                              className="text-orange-400 hover:text-red-400"
+                              title="Faslni o'chirish"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </span>
+                        ))}
+                        {(seasons[s.id] || []).length === 0 && (
+                          <span className="text-gray-500 text-xs italic">Hozircha fasl yo'q — birinchi epizod qo'shilganda avtomatik "1-fasl" yaratiladi.</span>
+                        )}
+                      </div>
+                      <form onSubmit={(e) => handleAddSeason(e, s.id)} className="flex gap-1.5">
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="№"
+                          value={seasonInput.seasonNumber}
+                          onChange={(e) => setSeasonInput((prev) => ({ ...prev, seasonNumber: e.target.value }))}
+                          className="w-16 p-1.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Nomi (ixtiyoriy)"
+                          value={seasonInput.title}
+                          onChange={(e) => setSeasonInput((prev) => ({ ...prev, title: e.target.value }))}
+                          className="flex-1 p-1.5 bg-gray-800 border border-gray-700 rounded-lg text-white text-xs focus:outline-none focus:ring-2 focus:ring-orange-500"
+                        />
+                        <button
+                          type="submit"
+                          className="px-2.5 py-1.5 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-medium flex items-center gap-1"
+                        >
+                          <Plus className="w-3 h-3" />
+                          Fasl
+                        </button>
+                      </form>
+                    </div>
+
                     {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
                     <div className="space-y-2 max-h-32 overflow-y-auto pr-1 mb-4 border-b border-gray-700/50 pb-3 custom-scrollbar">
                       {episodes[s.id]?.length > 0 ? (
@@ -697,7 +823,13 @@ const SeriesList = () => {
                           <div key={ep.id} className="flex items-center justify-between text-xs bg-gray-700/50 p-2 rounded-lg hover:bg-gray-700 transition">
                             <span className="truncate flex items-center space-x-1 font-medium text-gray-300">
                                 <Video className="w-3 h-3 text-blue-400 flex-shrink-0" />
+                                {ep.seasonNumber != null && (
+                                  <span className="text-orange-400 text-xs flex-shrink-0">S{ep.seasonNumber}</span>
+                                )}
                                 <span>{ep.episodeNumber}. {ep.title}</span>
+                                {ep.free && (
+                                  <Gift className="w-3 h-3 text-yellow-400 flex-shrink-0" />
+                                )}
                                 {(ep.durationHours || ep.durationMinutes || ep.durationSeconds) && (
                                   <span className="text-gray-500 text-xs ml-1">
                                     â±{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
@@ -847,6 +979,40 @@ const SeriesList = () => {
                                         <span className="text-center text-gray-500 text-xs">Soniya</span>
                                     </div>
                                 </div>
+
+                                {/* Fasl tanlash */}
+                                <div>
+                                    <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">
+                                        Fasl
+                                    </label>
+                                    <select
+                                        name="seasonId"
+                                        value={formData.seasonId}
+                                        onChange={handleInputChange}
+                                        className="w-full p-2.5 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm"
+                                    >
+                                        <option value="">
+                                            {(seasons[s.id] || []).length === 0 ? "1-fasl (avtomatik)" : "-- Fasl tanlang --"}
+                                        </option>
+                                        {(seasons[s.id] || []).map((season) => (
+                                            <option key={season.id} value={season.id}>
+                                                {season.title || `${season.seasonNumber}-fasl`}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                {/* Bonus epizod */}
+                                <label className="flex items-center gap-2 p-2 bg-gray-800 border border-gray-700 rounded-lg cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.free}
+                                        onChange={(e) => setFormData((prev) => ({ ...prev, free: e.target.checked }))}
+                                        className="w-4 h-4 accent-yellow-500"
+                                    />
+                                    <Gift className="w-4 h-4 text-yellow-400" />
+                                    <span className="text-xs text-gray-300">Bonus epizod (obunasiz ham ochiq)</span>
+                                </label>
 
                                 {/* Video URL */}
                                 <div>
@@ -1178,6 +1344,39 @@ const SeriesList = () => {
                     </div>
                 </div>
 
+                {/* Fasl tanlash */}
+                <div>
+                    <label htmlFor="edit-episode-season" className="block text-sm font-medium text-gray-300 mb-2">
+                        Fasl
+                    </label>
+                    <select
+                        id="edit-episode-season"
+                        name="seasonId"
+                        value={formData.seasonId}
+                        onChange={handleInputChange}
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                    >
+                        <option value="">-- Fasl tanlang --</option>
+                        {(seasons[editEpisode?.seriesId] || []).map((season) => (
+                            <option key={season.id} value={season.id}>
+                                {season.title || `${season.seasonNumber}-fasl`}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Bonus epizod */}
+                <label className="flex items-center gap-3 p-3 bg-gray-900 border border-gray-700 rounded-lg cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={formData.free}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, free: e.target.checked }))}
+                        className="w-4 h-4 accent-yellow-500"
+                    />
+                    <Gift className="w-5 h-5 text-yellow-400" />
+                    <span className="text-sm text-gray-300">Bonus epizod (obunasiz ham ochiq)</span>
+                </label>
+
                 {/* Video URL */}
                 <div>
                     <label htmlFor="edit-video-url" className="block text-sm font-medium text-gray-300 mb-2">
@@ -1219,7 +1418,7 @@ const SeriesList = () => {
                 </div>
 
                 <div className="flex justify-end space-x-3 pt-4">
-                  <button type="button" onClick={() => { setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "" }); setFormErrors({}); setImagePreview(null); }}
+                  <button type="button" onClick={() => { setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "", seasonId: "", free: false }); setFormErrors({}); setImagePreview(null); }}
                     className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors font-medium">
                     Bekor qilish
                   </button>

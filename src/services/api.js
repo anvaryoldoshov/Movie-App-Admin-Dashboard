@@ -525,6 +525,47 @@ export const testPushNotification = async ({ token, title, body, sound, image, d
   }
 };
 
+// SEASON FUNCTIONS
+export const getSeasonsBySeries = async (seriesId) => {
+  try {
+    const response = await api.get(`/admin/series/${seriesId}/seasons`);
+    return response.data;
+  } catch (error) {
+    console.error('Get seasons error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Fasllarni yuklashda xatolik';
+  }
+};
+
+export const createSeason = async (seriesId, seasonNumber, title) => {
+  try {
+    const response = await api.post(`/admin/series/${seriesId}/seasons`, { seasonNumber, title });
+    return response.data;
+  } catch (error) {
+    console.error('Create season error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Fasl qo'shishda xatolik";
+  }
+};
+
+export const updateSeason = async (id, seasonNumber, title) => {
+  try {
+    const response = await api.put(`/admin/seasons/${id}`, { seasonNumber, title });
+    return response.data;
+  } catch (error) {
+    console.error('Update season error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Faslni yangilashda xatolik';
+  }
+};
+
+export const deleteSeason = async (id) => {
+  try {
+    const response = await api.delete(`/admin/seasons/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete season error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Faslni o'chirishda xatolik";
+  }
+};
+
 // GENRE FUNCTIONS
 export const getGenres = async () => {
   try {
