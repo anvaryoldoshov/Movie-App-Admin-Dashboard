@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link as RouterLink } from "react-router-dom";
 import { getSeries, getEpisodesBySeries, createEpisode, getSeasonsBySeries } from "../services/api";
 import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
 
@@ -204,6 +205,9 @@ const Movies = () => {
               </select>
               <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
             </div>
+            <RouterLink to="/seasons" className="text-xs text-yellow-400 hover:text-yellow-300 mt-1 inline-block">
+              Yangi fasl qo'shish / boshqarish →
+            </RouterLink>
           </div>
 
           {/* Free/bonus episode toggle */}
