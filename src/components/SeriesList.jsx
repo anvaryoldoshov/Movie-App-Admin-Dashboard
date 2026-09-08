@@ -8,6 +8,7 @@ import {
   updateSeries,
   deleteSeries,
   backfillEpisodeDurations,
+  getGenres,
 } from "../services/api";
 import Episode from "./Episode";
 import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus } from 'lucide-react';
@@ -37,7 +38,9 @@ const SeriesList = () => {
     status: "",
     monthlyPrice: "",
     quarterlyPrice: "",
+    genreIds: [],
   });
+  const [genres, setGenres] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,6 +70,19 @@ const SeriesList = () => {
     fetchSeries();
   }, []);
 
+  useEffect(() => {
+    getGenres().then(setGenres).catch(() => setGenres([]));
+  }, []);
+
+  const toggleGenre = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      genreIds: prev.genreIds.includes(id)
+        ? prev.genreIds.filter((g) => g !== id)
+        : [...prev.genreIds, id],
+    }));
+  };
+
   // Original useEffect (escape key)
   useEffect(() => {
     const handleEscape = (e) => {
@@ -85,6 +101,7 @@ const SeriesList = () => {
           status: "",
           monthlyPrice: "",
           quarterlyPrice: "",
+          genreIds: [],
         });
         setFormErrors({});
         setImagePreview(null);
@@ -148,6 +165,7 @@ const SeriesList = () => {
       image: null,
       monthlyPrice: series.monthlyPrice != null ? String(series.monthlyPrice) : "",
       quarterlyPrice: series.quarterlyPrice != null ? String(series.quarterlyPrice) : "",
+      genreIds: (series.genres || []).map((g) => g.id),
     });
     setImagePreview(getFullImageUrl(series.imagePath));
     setFormErrors({});
@@ -248,6 +266,7 @@ const SeriesList = () => {
     form.append("status", formData.status);
     if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
     if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
+    (formData.genreIds || []).forEach((id) => form.append("genreIds", id));
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -266,6 +285,7 @@ const SeriesList = () => {
         status: "",
         monthlyPrice: "",
         quarterlyPrice: "",
+        genreIds: [],
       });
       setImagePreview(null);
       setError(null);
@@ -510,6 +530,9 @@ const SeriesList = () => {
                   {s.quarterlyPrice != null && (
                       <span className="px-2 py-0.5 rounded text-xs bg-purple-600/20 text-purple-300">3oy: {s.quarterlyPrice.toLocaleString()} so'm</span>
                   )}
+                  {(s.genres || []).map((g) => (
+                      <span key={g.id} className="px-2 py-0.5 rounded text-xs bg-orange-600/20 text-orange-300">{g.name}</span>
+                  ))}
               </div>
               
               <div className="mt-4 flex space-x-3 border-t border-gray-700 pt-3">
@@ -892,6 +915,36 @@ const SeriesList = () => {
                       className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
                     />
                   </div>
+                </div>
+
+                {/* Janr Tanlash */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Janrlar <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                  </label>
+                  {genres.length === 0 ? (
+                    <p className="text-gray-500 text-sm italic">Janrlar topilmadi.</p>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+                      {genres.map((genre) => {
+                        const isSelected = (formData.genreIds || []).includes(genre.id);
+                        return (
+                          <button
+                            type="button"
+                            key={genre.id}
+                            onClick={() => toggleGenre(genre.id)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
+                              isSelected
+                                ? "bg-indigo-600 border-indigo-500 text-white"
+                                : "bg-gray-900 border-gray-700 text-gray-300 hover:bg-gray-700/50"
+                            }`}
+                          >
+                            {genre.name}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 {/* Rasm Yuklash */}

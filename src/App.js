@@ -12,6 +12,7 @@ import Episode from "./components/Episode";
 import BannerComponent from "./components/BannerComponent";
 import SendNotification from "./components/SendNotification";
 import Statistics from "./components/Statistics";
+import GenreManagement from "./components/GenreManagement";
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
             <ProtectedRoute path="/Episode-list" component={Episode} />
             <ProtectedRoute path="/send-notification" component={SendNotification} />
             <ProtectedRoute path="/statistics" component={Statistics} />
+            <ProtectedRoute path="/genres" component={GenreManagement} />
             <Redirect to="/login" />
           </Switch>
         </Route>

@@ -515,6 +515,47 @@ export const testPushNotification = async ({ token, title, body, sound, image, d
   }
 };
 
+// GENRE FUNCTIONS
+export const getGenres = async () => {
+  try {
+    const response = await api.get('/admin/genres');
+    return response.data;
+  } catch (error) {
+    console.error('Get genres error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Janrlarni yuklashda xatolik';
+  }
+};
+
+export const createGenre = async (name) => {
+  try {
+    const response = await api.post('/admin/genres', { name });
+    return response.data;
+  } catch (error) {
+    console.error('Create genre error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Janr qo\'shishda xatolik';
+  }
+};
+
+export const updateGenre = async (id, name) => {
+  try {
+    const response = await api.put(`/admin/genres/${id}`, { name });
+    return response.data;
+  } catch (error) {
+    console.error('Update genre error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Janrni yangilashda xatolik';
+  }
+};
+
+export const deleteGenre = async (id) => {
+  try {
+    const response = await api.delete(`/admin/genres/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Delete genre error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Janrni o\'chirishda xatolik';
+  }
+};
+
 export const getRecentSounds = async () => {
   try {
     const response = await api.get('/admin/notifications/sounds');

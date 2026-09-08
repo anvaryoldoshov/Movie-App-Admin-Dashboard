@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { createSeries } from "../services/api"; 
+import React, { useState, useEffect } from "react";
+import { createSeries, getGenres } from "../services/api";
 import { Upload, XCircle, CheckCircle } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
 
 const CreateSeries = () => {
@@ -9,6 +9,18 @@ const CreateSeries = () => {
   const [quarterlyPrice, setQuarterlyPrice] = useState("");
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
+  const [genres, setGenres] = useState([]);
+  const [selectedGenreIds, setSelectedGenreIds] = useState([]);
+
+  useEffect(() => {
+    getGenres().then(setGenres).catch(() => setGenres([]));
+  }, []);
+
+  const toggleGenre = (id) => {
+    setSelectedGenreIds((prev) =>
+      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
+    );
+  };
 
   const handleImageChange = (e) => {
     setImage(e.target.files[0]);
@@ -29,6 +41,7 @@ const CreateSeries = () => {
       formData.append("status", status);
       if (monthlyPrice) formData.append("monthlyPrice", monthlyPrice);
       if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
+      selectedGenreIds.forEach((id) => formData.append("genreIds", id));
       formData.append("image", image);
 
       const res = await createSeries(formData);
@@ -38,6 +51,7 @@ const CreateSeries = () => {
       setStatus("COMING_SOON");
       setMonthlyPrice("");
       setQuarterlyPrice("");
+      setSelectedGenreIds([]);
     } catch (error) {
       console.error(error);
       setMessage("❌ Xatolik yuz berdi. Series yaratilmadi.");
@@ -124,6 +138,36 @@ const CreateSeries = () => {
                 placeholder="Masalan: 40000"
               />
             </div>
+          </div>
+
+          {/* Genre Selection */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Janrlar: <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+            </label>
+            {genres.length === 0 ? (
+              <p className="text-gray-500 text-sm italic">Janrlar topilmadi.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {genres.map((genre) => {
+                  const isSelected = selectedGenreIds.includes(genre.id);
+                  return (
+                    <button
+                      type="button"
+                      key={genre.id}
+                      onClick={() => toggleGenre(genre.id)}
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
+                        isSelected
+                          ? "bg-indigo-600 border-indigo-500 text-white"
+                          : "bg-[#0f111a] border-gray-600 text-gray-300 hover:bg-gray-700/50"
+                      }`}
+                    >
+                      {genre.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Image Upload */}
