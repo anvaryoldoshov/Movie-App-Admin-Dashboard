@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { createSeries, getGenres } from "../services/api";
-import { Upload, XCircle, CheckCircle } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
+import { createSeries, createSeason, getGenres } from "../services/api";
+import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
+
+let seasonRowKeySeq = 0;
+const emptySeasonRow = () => ({ key: seasonRowKeySeq++, seasonNumber: "", episodeCount: "", title: "" });
 
 const CreateSeries = () => {
   const [title, setTitle] = useState("");
   const [status, setStatus] = useState("COMING_SOON");
   const [monthlyPrice, setMonthlyPrice] = useState("");
   const [quarterlyPrice, setQuarterlyPrice] = useState("");
+  const [freeEpisodesCount, setFreeEpisodesCount] = useState("");
+  const [seasonRows, setSeasonRows] = useState([{ ...emptySeasonRow(), seasonNumber: "1" }]);
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
   const [genres, setGenres] = useState([]);
   const [selectedGenreIds, setSelectedGenreIds] = useState([]);
+
+  const updateSeasonRow = (key, field, value) => {
+    setSeasonRows((prev) => prev.map((row) => (row.key === key ? { ...row, [field]: value } : row)));
+  };
+
+  const addSeasonRow = () => setSeasonRows((prev) => [...prev, emptySeasonRow()]);
+
+  const removeSeasonRow = (key) => setSeasonRows((prev) => prev.filter((row) => row.key !== key));
 
   useEffect(() => {
     getGenres().then(setGenres).catch(() => setGenres([]));
@@ -41,16 +54,36 @@ const CreateSeries = () => {
       formData.append("status", status);
       if (monthlyPrice) formData.append("monthlyPrice", monthlyPrice);
       if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
+      if (freeEpisodesCount) formData.append("freeEpisodesCount", freeEpisodesCount);
       selectedGenreIds.forEach((id) => formData.append("genreIds", id));
       formData.append("image", image);
 
       const res = await createSeries(formData);
-      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi. ID: ${res.id}`);
+
+      // Fasllarni ketma-ket yaratish (agar admin oldindan belgilagan bo'lsa)
+      const validRows = seasonRows.filter((row) => row.seasonNumber);
+      let seasonWarning = "";
+      for (const row of validRows) {
+        try {
+          await createSeason(
+            res.id,
+            Number(row.seasonNumber),
+            row.episodeCount ? Number(row.episodeCount) : null,
+            row.title || null
+          );
+        } catch (seasonErr) {
+          seasonWarning = " (ba'zi fasllarni yaratishda xatolik yuz berdi, ularni 'Fasllar' sahifasida qo'shing)";
+        }
+      }
+
+      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi. ID: ${res.id}${seasonWarning}`);
       setTitle("");
       setImage(null);
       setStatus("COMING_SOON");
       setMonthlyPrice("");
       setQuarterlyPrice("");
+      setFreeEpisodesCount("");
+      setSeasonRows([{ ...emptySeasonRow(), seasonNumber: "1" }]);
       setSelectedGenreIds([]);
     } catch (error) {
       console.error(error);
@@ -138,6 +171,75 @@ const CreateSeries = () => {
                 placeholder="Masalan: 40000"
               />
             </div>
+          </div>
+
+          {/* Free episodes count */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
+              <Gift className="w-4 h-4 text-yellow-400" />
+              Nechta qism bepul: <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+            </label>
+            <input
+              type="number"
+              min="0"
+              className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+              value={freeEpisodesCount}
+              onChange={(e) => setFreeEpisodesCount(e.target.value)}
+              placeholder="Masalan: 5 (birinchi 5 ta epizod obunasiz ochiq bo'ladi)"
+            />
+          </div>
+
+          {/* Seasons pre-definition */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
+              <Layers className="w-4 h-4 text-orange-400" />
+              Fasllar: <span className="text-gray-500 text-xs">(ixtiyoriy — epizod qo'shilganda avtomatik taqsimlash uchun)</span>
+            </label>
+            <div className="space-y-2">
+              {seasonRows.map((row) => (
+                <div key={row.key} className="flex gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="№"
+                    value={row.seasonNumber}
+                    onChange={(e) => updateSeasonRow(row.key, "seasonNumber", e.target.value)}
+                    className="w-16 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-sm"
+                  />
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="Nechta qism (masalan 30)"
+                    value={row.episodeCount}
+                    onChange={(e) => updateSeasonRow(row.key, "episodeCount", e.target.value)}
+                    className="flex-1 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-sm"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Nomi (ixtiyoriy)"
+                    value={row.title}
+                    onChange={(e) => updateSeasonRow(row.key, "title", e.target.value)}
+                    className="flex-1 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeSeasonRow(row.key)}
+                    className="p-2.5 bg-gray-700 hover:bg-red-600 text-gray-300 hover:text-white rounded-lg transition"
+                    title="O'chirish"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={addSeasonRow}
+              className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full text-xs font-medium transition"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Yana fasl qo'shish
+            </button>
           </div>
 
           {/* Genre Selection */}

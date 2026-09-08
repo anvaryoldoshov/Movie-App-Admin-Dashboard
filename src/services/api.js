@@ -536,9 +536,9 @@ export const getSeasonsBySeries = async (seriesId) => {
   }
 };
 
-export const createSeason = async (seriesId, seasonNumber, title) => {
+export const createSeason = async (seriesId, seasonNumber, episodeCount, title) => {
   try {
-    const response = await api.post(`/admin/series/${seriesId}/seasons`, { seasonNumber, title });
+    const response = await api.post(`/admin/series/${seriesId}/seasons`, { seasonNumber, episodeCount, title });
     return response.data;
   } catch (error) {
     console.error('Create season error:', error.response?.data || error.message);
@@ -546,9 +546,9 @@ export const createSeason = async (seriesId, seasonNumber, title) => {
   }
 };
 
-export const updateSeason = async (id, seasonNumber, title) => {
+export const updateSeason = async (id, seasonNumber, episodeCount, title) => {
   try {
-    const response = await api.put(`/admin/seasons/${id}`, { seasonNumber, title });
+    const response = await api.put(`/admin/seasons/${id}`, { seasonNumber, episodeCount, title });
     return response.data;
   } catch (error) {
     console.error('Update season error:', error.response?.data || error.message);

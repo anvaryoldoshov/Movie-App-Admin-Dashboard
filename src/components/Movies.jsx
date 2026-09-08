@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { getSeries, getEpisodesBySeries, createEpisode, getSeasonsBySeries } from "../services/api";
+import { getSeries, getEpisodesBySeries, createEpisode } from "../services/api";
 import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
 
 const Movies = () => {
   const [seriesList, setSeriesList] = useState([]);
   const [episodes, setEpisodes] = useState([]);
-  const [seasons, setSeasons] = useState([]);
   const [selectedSeriesId, setSelectedSeriesId] = useState("");
   const [newEpisode, setNewEpisode] = useState({
     title: "",
@@ -15,8 +14,6 @@ const Movies = () => {
     durationHours: "",
     durationMinutes: "",
     durationSeconds: "",
-    seasonId: "",
-    free: false,
   });
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
@@ -31,17 +28,28 @@ const Movies = () => {
       .catch((e) => setError("Seriallarni olishda xato: " + e.message));
   }, []);
 
+  // Serial nomi va oxirgi epizod raqamidan kelib chiqib, keyingi epizod uchun standart nom/raqamni hisoblaydi
+  const applyDefaults = (episodesList, seriesId) => {
+    const series = seriesList.find((s) => String(s.id) === String(seriesId));
+    const maxNumber = episodesList.reduce((max, ep) => Math.max(max, ep.episodeNumber || 0), 0);
+    const nextNumber = maxNumber + 1;
+    setNewEpisode((prev) => ({
+      ...prev,
+      episodeNumber: String(nextNumber),
+      title: series ? `${series.title} - ${nextNumber}-qism` : prev.title,
+    }));
+  };
+
   useEffect(() => {
     setEpisodes([]);
-    setSeasons([]);
-    setNewEpisode((prev) => ({ ...prev, seasonId: "" }));
     if (!selectedSeriesId) return;
     getEpisodesBySeries(selectedSeriesId)
-      .then(setEpisodes)
+      .then((data) => {
+        setEpisodes(data);
+        applyDefaults(data, selectedSeriesId);
+      })
       .catch((e) => setError("Episodlarni olishda xato: " + e.message));
-    getSeasonsBySeries(selectedSeriesId)
-      .then(setSeasons)
-      .catch(() => setSeasons([]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeriesId]);
 
   const handleCreate = async (e) => {
@@ -49,8 +57,8 @@ const Movies = () => {
     setError("");
     setSuccessMessage("");
 
-    if (!selectedSeriesId || !thumbFile || !newEpisode.title || !newEpisode.episodeNumber || !newEpisode.videoUrl) {
-      setError("Iltimos, barcha maydonlarni to‘ldiring va rasmni tanlang.");
+    if (!selectedSeriesId || !newEpisode.title || !newEpisode.episodeNumber || !newEpisode.videoUrl) {
+      setError("Iltimos, barcha maydonlarni to‘ldiring.");
       return;
     }
 
@@ -61,17 +69,17 @@ const Movies = () => {
     if (newEpisode.durationHours) formData.append("durationHours", newEpisode.durationHours);
     if (newEpisode.durationMinutes) formData.append("durationMinutes", newEpisode.durationMinutes);
     if (newEpisode.durationSeconds) formData.append("durationSeconds", newEpisode.durationSeconds);
-    if (newEpisode.seasonId) formData.append("seasonId", newEpisode.seasonId);
-    formData.append("free", newEpisode.free);
-    formData.append("image", thumbFile);
+    if (thumbFile) formData.append("image", thumbFile);
 
     try {
       const created = await createEpisode(selectedSeriesId, formData);
-      setEpisodes((prev) => [...prev, created]);
+      const updatedEpisodes = [...episodes, created];
+      setEpisodes(updatedEpisodes);
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
-      // Reset form
-      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "", seasonId: newEpisode.seasonId, free: false });
+      // Formani tozalash, keyingi epizod uchun nom/raqamni avtomatik taklif qilish
+      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "" });
+      applyDefaults(updatedEpisodes, selectedSeriesId);
       setThumbFile(null);
     } catch (err) {
       console.error(err);
@@ -182,47 +190,12 @@ const Movies = () => {
             </div>
           </div>
 
-          {/* Season select */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Fasl: <span className="text-gray-500 text-xs">(tanlanmasa avtomatik 1-faslga qo'shiladi)</span>
-            </label>
-            <div className="relative">
-              <select
-                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner cursor-pointer"
-                value={newEpisode.seasonId}
-                onChange={(e) => setNewEpisode({ ...newEpisode, seasonId: e.target.value })}
-                disabled={!selectedSeriesId}
-              >
-                <option value="" className="bg-[#1c1e2c]">
-                  {seasons.length === 0 ? "-- Fasllar mavjud emas (1-fasl yaratiladi) --" : "-- Fasl tanlang --"}
-                </option>
-                {seasons.map((s) => (
-                  <option key={s.id} value={s.id} className="bg-[#1c1e2c]">
-                    {s.title || `${s.seasonNumber}-fasl`}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-            </div>
-            <RouterLink to="/seasons" className="text-xs text-yellow-400 hover:text-yellow-300 mt-1 inline-block">
-              Yangi fasl qo'shish / boshqarish →
-            </RouterLink>
-          </div>
-
-          {/* Free/bonus episode toggle */}
-          <label className="flex items-center gap-3 p-3 bg-[#0f111a] border border-gray-600 rounded-lg cursor-pointer">
-            <input
-              type="checkbox"
-              checked={newEpisode.free}
-              onChange={(e) => setNewEpisode({ ...newEpisode, free: e.target.checked })}
-              className="w-4 h-4 accent-yellow-500"
-            />
-            <Gift className="w-5 h-5 text-yellow-400" />
-            <span className="text-sm text-gray-300">
-              Bonus epizod — obunasiz ham hamma tomosha qila oladi
-            </span>
-          </label>
+          {/* Fasl va bepul holati avtomatik hisoblanadi */}
+          <p className="text-xs text-gray-500 flex items-center gap-1.5">
+            <Gift className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
+            Fasl va bonus holati epizod raqamiga qarab avtomatik belgilanadi (seriali va fasllar sozlamalariga qarab).{" "}
+            <RouterLink to="/seasons" className="text-yellow-400 hover:text-yellow-300">Fasllarni boshqarish →</RouterLink>
+          </p>
 
           {/* Duration */}
           <div>
@@ -291,26 +264,25 @@ const Movies = () => {
           {/* Thumbnail upload */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
-              Epizod rasmi (Thumbnail):
+              Epizod rasmi (Thumbnail): <span className="text-gray-500 text-xs">(ixtiyoriy — tanlamasangiz, Bunny'dagi videodan avtomatik olinadi)</span>
             </label>
             <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-              
+
               <label className={`cursor-pointer flex items-center space-x-2 py-2 px-4 rounded-lg shadow transition duration-200 text-sm font-medium min-w-[150px]
                   ${thumbFile ? 'bg-green-600 hover:bg-green-700' : 'bg-indigo-600 hover:bg-indigo-700'}
               `}>
                 <Image className="w-5 h-5" />
                 <span>
-                  {thumbFile ? "Tanlandi" : "Rasm tanlang"}
+                  {thumbFile ? "Tanlandi" : "Rasm tanlash (ixtiyoriy)"}
                 </span>
                 <input
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
                   className="hidden"
-                  required
                 />
               </label>
-              
+
               {thumbFile ? (
                 <div className="flex items-center space-x-2">
                     <img
@@ -321,7 +293,7 @@ const Movies = () => {
                     <span className="text-xs text-gray-400 truncate max-w-[150px]">{thumbFile.name}</span>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">JPG yoki PNG faylini yuklang</p>
+                <p className="text-sm text-gray-500">Avtomatik: Bunny'dan olinadi</p>
               )}
             </div>
           </div>

@@ -17,9 +17,9 @@ const SeasonManagement = () => {
   const [isLoadingSeasons, setIsLoadingSeasons] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
-  const [newSeason, setNewSeason] = useState({ seasonNumber: "", title: "" });
+  const [newSeason, setNewSeason] = useState({ seasonNumber: "", episodeCount: "", title: "" });
   const [editingId, setEditingId] = useState(null);
-  const [editingSeason, setEditingSeason] = useState({ seasonNumber: "", title: "" });
+  const [editingSeason, setEditingSeason] = useState({ seasonNumber: "", episodeCount: "", title: "" });
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, title: "", message: "", onConfirm: null });
 
   const closeConfirm = () => setConfirmDialog({ isOpen: false, title: "", message: "", onConfirm: null });
@@ -52,9 +52,14 @@ const SeasonManagement = () => {
     e.preventDefault();
     if (!newSeason.seasonNumber || !selectedSeriesId) return;
     try {
-      const created = await createSeason(selectedSeriesId, Number(newSeason.seasonNumber), newSeason.title || null);
+      const created = await createSeason(
+        selectedSeriesId,
+        Number(newSeason.seasonNumber),
+        newSeason.episodeCount ? Number(newSeason.episodeCount) : null,
+        newSeason.title || null
+      );
       setSeasons((prev) => [...prev, created].sort((a, b) => a.seasonNumber - b.seasonNumber));
-      setNewSeason({ seasonNumber: "", title: "" });
+      setNewSeason({ seasonNumber: "", episodeCount: "", title: "" });
       setError(null);
       showSuccess("Fasl qo'shildi");
     } catch (err) {
@@ -64,19 +69,28 @@ const SeasonManagement = () => {
 
   const startEdit = (season) => {
     setEditingId(season.id);
-    setEditingSeason({ seasonNumber: String(season.seasonNumber), title: season.title || "" });
+    setEditingSeason({
+      seasonNumber: String(season.seasonNumber),
+      episodeCount: season.episodeCount != null ? String(season.episodeCount) : "",
+      title: season.title || "",
+    });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditingSeason({ seasonNumber: "", title: "" });
+    setEditingSeason({ seasonNumber: "", episodeCount: "", title: "" });
   };
 
   const handleUpdate = async (e, id) => {
     e.preventDefault();
     if (!editingSeason.seasonNumber) return;
     try {
-      const updated = await updateSeason(id, Number(editingSeason.seasonNumber), editingSeason.title || null);
+      const updated = await updateSeason(
+        id,
+        Number(editingSeason.seasonNumber),
+        editingSeason.episodeCount ? Number(editingSeason.episodeCount) : null,
+        editingSeason.title || null
+      );
       setSeasons((prev) => prev.map((s) => (s.id === id ? updated : s)).sort((a, b) => a.seasonNumber - b.seasonNumber));
       cancelEdit();
       setError(null);
@@ -177,7 +191,7 @@ const SeasonManagement = () => {
           </div>
         ) : (
           <>
-            <form onSubmit={handleCreate} className="flex gap-2 mb-6">
+            <form onSubmit={handleCreate} className="flex flex-wrap gap-2 mb-2">
               <input
                 type="number"
                 min="1"
@@ -187,11 +201,19 @@ const SeasonManagement = () => {
                 className="w-20 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-500"
               />
               <input
+                type="number"
+                min="1"
+                placeholder="Nechta qism"
+                value={newSeason.episodeCount}
+                onChange={(e) => setNewSeason((prev) => ({ ...prev, episodeCount: e.target.value }))}
+                className="w-32 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-500"
+              />
+              <input
                 type="text"
                 placeholder="Nomi (ixtiyoriy, masalan: Maxsus qism)"
                 value={newSeason.title}
                 onChange={(e) => setNewSeason((prev) => ({ ...prev, title: e.target.value }))}
-                className="flex-1 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-500"
+                className="flex-1 min-w-[160px] p-3 bg-gray-900 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white placeholder-gray-500"
               />
               <button
                 type="submit"
@@ -201,6 +223,9 @@ const SeasonManagement = () => {
                 Qo'shish
               </button>
             </form>
+            <p className="text-gray-500 text-xs mb-6">
+              "Nechta qism" — shu faslga necha epizod sig'ishi rejalashtirilgan (masalan 30). Yangi epizod qo'shilganda, uning raqamiga qarab avtomatik shu faslga tushadi; sig'im to'lganda keyingi fasl boshlanadi.
+            </p>
 
             <div className="space-y-2">
               {seasons.length === 0 ? (
@@ -221,6 +246,14 @@ const SeasonManagement = () => {
                           value={editingSeason.seasonNumber}
                           onChange={(e) => setEditingSeason((prev) => ({ ...prev, seasonNumber: e.target.value }))}
                           className="w-16 p-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
+                        />
+                        <input
+                          type="number"
+                          min="1"
+                          placeholder="Nechta qism"
+                          value={editingSeason.episodeCount}
+                          onChange={(e) => setEditingSeason((prev) => ({ ...prev, episodeCount: e.target.value }))}
+                          className="w-28 p-2 bg-gray-900 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-white"
                         />
                         <input
                           type="text"
@@ -251,6 +284,9 @@ const SeasonManagement = () => {
                         <span className="font-medium text-gray-200">
                           {season.title || `${season.seasonNumber}-fasl`}
                           {season.title && <span className="text-gray-500 text-xs ml-2">({season.seasonNumber}-fasl)</span>}
+                          {season.episodeCount != null && (
+                            <span className="text-orange-400 text-xs ml-2">— {season.episodeCount} qism</span>
+                          )}
                         </span>
                         <div className="flex gap-2">
                           <button
