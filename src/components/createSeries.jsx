@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from "react";
-import { createSeries, createSeason, getGenres } from "../services/api";
-import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers, Video } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
+import { createSeries, createSeason, importEpisodesFromBunny, getGenres } from "../services/api";
+import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers, Video, EyeOff, Loader2 } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
 
 let seasonRowKeySeq = 0;
 const emptySeasonRow = () => ({ key: seasonRowKeySeq++, seasonNumber: "", episodeCount: "", title: "" });
 
 const CreateSeries = () => {
   const [title, setTitle] = useState("");
-  const [status, setStatus] = useState("COMING_SOON");
   const [monthlyPrice, setMonthlyPrice] = useState("");
   const [quarterlyPrice, setQuarterlyPrice] = useState("");
   const [freeEpisodesCount, setFreeEpisodesCount] = useState("");
   const [bunnyCollectionId, setBunnyCollectionId] = useState("");
+  const [importAllFromBunny, setImportAllFromBunny] = useState(true);
   const [seasonRows, setSeasonRows] = useState([{ ...emptySeasonRow(), seasonNumber: "1" }]);
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [genres, setGenres] = useState([]);
   const [selectedGenreIds, setSelectedGenreIds] = useState([]);
 
@@ -49,10 +50,13 @@ const CreateSeries = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const formData = new FormData();
       formData.append("title", title);
-      formData.append("status", status);
+      // Yangi seriallar har doim yashirin holatda yaratiladi - admin "Seriallar ro'yxati"da
+      // tekshirib bo'lgach, o'zi "Efirda"ga o'tkazadi
+      formData.append("status", "UNLISTED");
       if (monthlyPrice) formData.append("monthlyPrice", monthlyPrice);
       if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
       if (freeEpisodesCount) formData.append("freeEpisodesCount", freeEpisodesCount);
@@ -64,7 +68,7 @@ const CreateSeries = () => {
 
       // Fasllarni ketma-ket yaratish (agar admin oldindan belgilagan bo'lsa)
       const validRows = seasonRows.filter((row) => row.seasonNumber);
-      let seasonWarning = "";
+      let extraInfo = "";
       for (const row of validRows) {
         try {
           await createSeason(
@@ -74,23 +78,39 @@ const CreateSeries = () => {
             row.title || null
           );
         } catch (seasonErr) {
-          seasonWarning = " (ba'zi fasllarni yaratishda xatolik yuz berdi, ularni 'Fasllar' sahifasida qo'shing)";
+          extraInfo += " (ba'zi fasllarni yaratishda xatolik yuz berdi, ularni 'Fasllar' sahifasida qo'shing)";
         }
       }
 
-      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi. ID: ${res.id}${seasonWarning}`);
+      // Bunny Collection'dan barcha epizodlarni bir yo'la import qilish (admin xohlasa)
+      if (bunnyCollectionId && importAllFromBunny) {
+        try {
+          const importResult = await importEpisodesFromBunny(res.id);
+          if (importResult.error) {
+            extraInfo += ` (Bunny'dan import qilinmadi: ${importResult.error})`;
+          } else {
+            extraInfo += ` — Bunny'dan ${importResult.imported} ta epizod import qilindi`;
+          }
+        } catch (importErr) {
+          extraInfo += " (Bunny'dan import qilishda xatolik yuz berdi)";
+        }
+      }
+
+      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi (yashirin holatda). ID: ${res.id}${extraInfo}`);
       setTitle("");
       setImage(null);
-      setStatus("COMING_SOON");
       setMonthlyPrice("");
       setQuarterlyPrice("");
       setFreeEpisodesCount("");
       setBunnyCollectionId("");
+      setImportAllFromBunny(true);
       setSeasonRows([{ ...emptySeasonRow(), seasonNumber: "1" }]);
       setSelectedGenreIds([]);
     } catch (error) {
       console.error(error);
       setMessage("❌ Xatolik yuz berdi. Series yaratilmadi.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -127,23 +147,12 @@ const CreateSeries = () => {
             />
           </div>
 
-          {/* Status Select */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Holat:
-            </label>
-            <select
-              className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white shadow-inner appearance-none cursor-pointer"
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-            >
-              <option value="COMING_SOON" className='bg-[#1c1e2c]'>Tez kunda</option>
-              <option value="PUBLISHED" className='bg-[#1c1e2c]'>Efirda / Nashr etilgan</option>
-              <option value="UNLISTED" className='bg-[#1c1e2c]'>Yashirin</option>
-              <option value="ARCHIVED" className='bg-[#1c1e2c]'>Arxivlangan</option>
-              <option value="DRAFT" className='bg-[#1c1e2c]'>Qoralama</option>
-              <option value="REMOVED" className='bg-[#1c1e2c]'>O'chirilgan</option>
-            </select>
+          {/* Holat haqida ma'lumot */}
+          <div className="flex items-start gap-2 p-3 bg-gray-800/60 border border-gray-700 rounded-lg">
+            <EyeOff className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-400">
+              Yangi serial avtomatik <span className="text-gray-200 font-medium">yashirin</span> holatda yaratiladi — platformada ko'rinmaydi. Epizodlarni tekshirib bo'lgach, "Seriallar ro'yxati"da holatini <span className="text-gray-200 font-medium">"Efirda"</span>ga o'zgartirib, foydalanuvchilarga ochishingiz mumkin.
+            </p>
           </div>
 
           {/* Price Fields */}
@@ -205,9 +214,22 @@ const CreateSeries = () => {
               onChange={(e) => setBunnyCollectionId(e.target.value)}
               placeholder="Collection ID yoki Bunny dashboard havolasini joylashtiring"
             />
-            <p className="text-gray-500 text-xs mt-1">
-              Agar bu serialning videolari Bunny'da alohida Collection'ga yuklangan bo'lsa, shu yerga qo'ying — epizod qo'shishda video va raqam avtomatik taklif qilinadi, "Seriallar ro'yxati"da esa bir bosishda hammasini import qilish mumkin bo'ladi.
+            <p className="text-gray-500 text-xs mt-1 mb-2">
+              Agar bu serialning videolari Bunny'da alohida Collection'ga yuklangan bo'lsa, shu yerga qo'ying.
             </p>
+            {bunnyCollectionId && (
+              <label className="flex items-center gap-2 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={importAllFromBunny}
+                  onChange={(e) => setImportAllFromBunny(e.target.checked)}
+                  className="w-4 h-4 accent-blue-500"
+                />
+                <span className="text-sm text-gray-300">
+                  Serial yaratilgach, shu Collection'dagi barcha epizodlarni bir yo'la avtomatik import qilish
+                </span>
+              </label>
+            )}
           </div>
 
           {/* Seasons pre-definition */}
@@ -341,9 +363,17 @@ const CreateSeries = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition duration-300 ease-in-out shadow-lg shadow-indigo-500/50 transform hover:-translate-y-0.5"
+            disabled={isSubmitting}
+            className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition duration-300 ease-in-out shadow-lg shadow-indigo-500/50 transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
           >
-            ➕ Seriesni Saqlash
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Saqlanmoqda...
+              </>
+            ) : (
+              <>➕ Seriesni Saqlash</>
+            )}
           </button>
 
           {/* Message */}

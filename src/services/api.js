@@ -421,6 +421,18 @@ export const getNextVideoUrl = async (seriesId) => {
   }
 };
 
+// Serialga biriktirilgan Bunny Collection ichidagi hali import qilinmagan barcha
+// videolarni bitta so'rovda epizod sifatida yaratadi
+export const importEpisodesFromBunny = async (seriesId) => {
+  try {
+    const response = await api.post(`/admin/series/${seriesId}/episodes/import-from-bunny`);
+    return response.data;
+  } catch (error) {
+    console.error('Import episodes from Bunny error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Bunny'dan import qilishda xatolik";
+  }
+};
+
 export const updateUser = async (id, userData) => {
   try {
     const response = await api.put(`/users/${id}`, userData);
