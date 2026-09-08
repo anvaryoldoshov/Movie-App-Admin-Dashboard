@@ -3,6 +3,8 @@ import { Link as RouterLink } from "react-router-dom";
 import { getSeries, getEpisodesBySeries, createEpisode } from "../services/api";
 import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
 
+const LAST_SERIES_ID_KEY = "movieapp_last_episode_series_id";
+
 const Movies = () => {
   const [seriesList, setSeriesList] = useState([]);
   const [episodes, setEpisodes] = useState([]);
@@ -24,9 +26,23 @@ const Movies = () => {
       .then(response => {
         const data = Array.isArray(response) ? response : response.series || response.movies || [];
         setSeriesList(data);
+
+        // Oxirgi marta epizod yuklangan serialni avtomatik tanlaydi (mavjud bo'lsa)
+        const lastSeriesId = localStorage.getItem(LAST_SERIES_ID_KEY);
+        if (lastSeriesId && data.some((s) => String(s.id) === lastSeriesId)) {
+          setSelectedSeriesId(lastSeriesId);
+        }
       })
       .catch((e) => setError("Seriallarni olishda xato: " + e.message));
   }, []);
+
+  const handleSeriesSelect = (seriesId) => {
+    setSelectedSeriesId(seriesId);
+    setError("");
+    if (seriesId) {
+      localStorage.setItem(LAST_SERIES_ID_KEY, seriesId);
+    }
+  };
 
   // Serial nomi va oxirgi epizod raqamidan kelib chiqib, keyingi epizod uchun standart nom/raqamni hisoblaydi
   const applyDefaults = (episodesList, seriesId) => {
@@ -130,13 +146,13 @@ const Movies = () => {
           {/* Series select */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
-              Serial tanlang:
+              Serial tanlang: <span className="text-gray-500 text-xs">(oxirgi tanlangan serial avtomatik saqlanadi)</span>
             </label>
             <div className="relative">
                 <select
                 className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner cursor-pointer"
                 value={selectedSeriesId}
-                onChange={(e) => {setSelectedSeriesId(e.target.value); setError("");}}
+                onChange={(e) => handleSeriesSelect(e.target.value)}
                 required
                 >
                 <option value="" className='bg-[#1c1e2c]'>-- Serial tanlang --</option>
