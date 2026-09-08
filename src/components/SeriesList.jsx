@@ -12,7 +12,7 @@ import {
   reorderSeries,
 } from "../services/api";
 import Episode from "./Episode";
-import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical } from 'lucide-react';
+import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
@@ -110,7 +110,20 @@ const SeriesList = () => {
     setDragOverId(null);
   };
 
-  const handleDrop = async (e, targetId) => {
+  // Yangi tartibni ekranda darhol ko'rsatib, keyin backendga saqlaydi; xatolik bo'lsa eski holatga qaytaradi
+  const persistReorder = async (reordered, previousOrder) => {
+    setSeries(reordered);
+    try {
+      await reorderSeries(reordered.map((s) => s.id));
+      setError(null);
+    } catch (err) {
+      setSeries(previousOrder);
+      setError(typeof err === "string" ? err : "Tartibni saqlab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const handleDrop = (e, targetId) => {
     e.preventDefault();
     const sourceId = draggedId;
     setDraggedId(null);
@@ -126,17 +139,20 @@ const SeriesList = () => {
     const [moved] = reordered.splice(sourceIndex, 1);
     reordered.splice(targetIndex, 0, moved);
 
-    const previousOrder = series;
-    setSeries(reordered);
+    persistReorder(reordered, series);
+  };
 
-    try {
-      await reorderSeries(reordered.map((s) => s.id));
-      setError(null);
-    } catch (err) {
-      setSeries(previousOrder);
-      setError(typeof err === "string" ? err : "Tartibni saqlab bo'lmadi.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+  // Bitta tugma bosish bilan serialni bir pog'ona yuqoriga/pastga ko'chirish
+  const handleMoveSeries = (seriesId, direction) => {
+    const index = series.findIndex((s) => s.id === seriesId);
+    const targetIndex = index + direction;
+    if (index === -1 || targetIndex < 0 || targetIndex >= series.length) return;
+
+    const reordered = [...series];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    persistReorder(reordered, series);
   };
 
   // Original useEffect (escape key)
@@ -525,8 +541,8 @@ const SeriesList = () => {
         Serial Kontentni Boshqarish Paneli
       </h1>
       <p className="text-center text-gray-500 text-sm mb-8 flex items-center justify-center gap-1.5">
-        <GripVertical className="w-4 h-4" />
-        Tartibni o'zgartirish uchun sarlavha oldidagi tutqichni ushlab torting
+        <ArrowUp className="w-4 h-4" />
+        Tartibni o'zgartirish uchun ↑/↓ tugmalaridan foydalaning yoki tutqichni ushlab torting
       </p>
       <div className="border-b-2 border-indigo-500/50 mb-8" />
       
@@ -546,7 +562,7 @@ const SeriesList = () => {
       
       {/* Seriallar Gridi (Premium Ko'rinish) */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 sm:gap-8 items-start">
-        {series.map((s) => (
+        {series.map((s, index) => (
           <div
             key={s.id}
             onDragOver={(e) => handleDragOver(e, s.id)}
@@ -614,6 +630,24 @@ const SeriesList = () => {
               </div>
               
               <div className="mt-4 flex space-x-3 border-t border-gray-700 pt-3">
+                <button
+                  onClick={() => handleMoveSeries(s.id, -1)}
+                  disabled={index === 0}
+                  className="p-2 bg-gray-700 text-white rounded-lg text-sm transition duration-200 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center"
+                  title="Bir pog'ona yuqoriga"
+                  aria-label={`Move series ${s.title} up`}
+                >
+                  <ArrowUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => handleMoveSeries(s.id, 1)}
+                  disabled={index === series.length - 1}
+                  className="p-2 bg-gray-700 text-white rounded-lg text-sm transition duration-200 hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center"
+                  title="Bir pog'ona pastga"
+                  aria-label={`Move series ${s.title} down`}
+                >
+                  <ArrowDown className="w-4 h-4" />
+                </button>
                 <button
                   onClick={() => handleEditSeriesClick(s)}
                   className="p-2 bg-indigo-600 text-white rounded-lg text-sm transition duration-200 hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 flex items-center"
