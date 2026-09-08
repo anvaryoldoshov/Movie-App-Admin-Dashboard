@@ -12,7 +12,6 @@ import {
   getGenres,
   reorderSeries,
   getNextVideoUrl,
-  importEpisodesFromBunny,
 } from "../services/api";
 import Episode from "./Episode";
 import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift } from 'lucide-react';
@@ -54,7 +53,6 @@ const SeriesList = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
   const [isBackfilling, setIsBackfilling] = useState(false);
-  const [isImportingBunny, setIsImportingBunny] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
@@ -216,33 +214,6 @@ const SeriesList = () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     } finally {
       setIsBackfilling(false);
-    }
-  };
-
-  // Serialga biriktirilgan Bunny Collection ichidagi hali import qilinmagan barcha
-  // videolarni bitta so'rovda epizod sifatida yaratadi
-  const handleImportFromBunny = async (seriesId) => {
-    setIsImportingBunny(true);
-    try {
-      const result = await importEpisodesFromBunny(seriesId);
-      setError(null);
-      if (result.error) {
-        setError(result.error);
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      } else {
-        setSuccess(
-          `Bunny'dan import qilindi: ${result.imported} ta epizod qo'shildi` +
-          (result.skippedAlreadyUsed ? `, ${result.skippedAlreadyUsed} ta allaqachon mavjud edi` : "") +
-          (result.skippedNoNumber ? `, ${result.skippedNoNumber} ta videoda raqam topilmadi` : "")
-        );
-        setTimeout(() => setSuccess(null), 6000);
-      }
-      await fetchEpisodes(seriesId);
-    } catch (err) {
-      setError(typeof err === "string" ? err : "Bunny'dan import qilib bo'lmadi.");
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
-      setIsImportingBunny(false);
     }
   };
 
@@ -758,21 +729,6 @@ const SeriesList = () => {
                             )}
                             <span>Hajm/davomiylikni yangilash</span>
                         </button>
-                        {s.bunnyCollectionId && (
-                            <button
-                                onClick={() => handleImportFromBunny(s.id)}
-                                disabled={isImportingBunny}
-                                className="mt-2 ml-2 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-blue-700 hover:bg-blue-600 text-white rounded-full text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap w-fit"
-                                title="Bunny Collection'dagi hali import qilinmagan barcha videolarni epizod sifatida yaratadi"
-                            >
-                                {isImportingBunny ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Video className="w-3.5 h-3.5 text-blue-300" />
-                                )}
-                                <span>Bunny'dan barcha epizodlarni import qilish</span>
-                            </button>
-                        )}
                     </div>
 
                     {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
