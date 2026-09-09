@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { getSeries, getEpisodesBySeries, createEpisode, getNextVideoUrl } from "../services/api";
-import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
+import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift, Loader2 } from 'lucide-react';
 
 const LAST_SERIES_ID_KEY = "movieapp_last_episode_series_id";
 
@@ -17,6 +17,9 @@ const Movies = () => {
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  // Bunny'dan taklif so'ralayotgan payt (nom/raqam/link hali yozilmagan) UI'da
+  // yuklanish belgisini ko'rsatish va formani vaqtincha bloklash uchun
+  const [isSuggesting, setIsSuggesting] = useState(false);
   // Admin dropdown'da serialni tez almashtirsa, eski serial uchun ketayotgan
   // (episode/video URL) so'rovlar keyinroq javob berib, joriy serialning
   // qiymatlarini eskirgan ma'lumot bilan ustidan yozib qo'ymasligi uchun kuzatiladi
@@ -48,25 +51,15 @@ const Movies = () => {
     }
   };
 
-  // Serial nomi va oxirgi epizod raqamidan kelib chiqib, keyingi epizod uchun standart nom/raqamni hisoblaydi
-  const applyDefaults = (episodesList, seriesId) => {
-    const series = seriesList.find((s) => String(s.id) === String(seriesId));
-    const maxNumber = episodesList.reduce((max, ep) => Math.max(max, ep.episodeNumber || 0), 0);
-    const nextNumber = maxNumber + 1;
-    setNewEpisode((prev) => ({
-      ...prev,
-      episodeNumber: String(nextNumber),
-      title: series ? `${series.title} - ${nextNumber}-qism` : prev.title,
-    }));
-  };
-
-  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL maydoniga
-  // qo'yadi. Agar serial Bunny Collection'ga bog'langan bo'lsa, video nomidagi raqam
-  // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
+  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL, epizod
+  // raqami va nomini shundan to'ldiradi. Mos video topilmasa (Collection tugagan yoki
+  // sozlanmagan), hech narsa taklif qilinmaydi - noto'g'ri taxminiy qiymat berishdan ko'ra,
+  // admin qo'lda kiritgani ma'qul.
   const suggestVideoUrl = (seriesId) => {
     getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
       // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
       if (currentSeriesIdRef.current !== seriesId) return;
+      setIsSuggesting(false);
       if (!videoUrl) return;
       const series = seriesList.find((s) => String(s.id) === String(seriesId));
       setNewEpisode((prev) => ({
@@ -83,15 +76,22 @@ const Movies = () => {
     setEpisodes([]);
     if (!selectedSeriesId) return;
     const requestedSeriesId = selectedSeriesId;
+    // Serial almashtirilganda avvalgi serialdan qolgan qiymatlar (ayniqsa video link)
+    // darhol tozalanadi - aks holda yangi serialda taklif topilmasa, eski link ko'rinib qoladi
+    setNewEpisode({ title: "", episodeNumber: "", videoUrl: "" });
+    setIsSuggesting(true);
     getEpisodesBySeries(requestedSeriesId)
       .then((data) => {
         // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
         if (currentSeriesIdRef.current !== requestedSeriesId) return;
         setEpisodes(data);
-        applyDefaults(data, requestedSeriesId);
         suggestVideoUrl(requestedSeriesId);
       })
-      .catch((e) => setError("Episodlarni olishda xato: " + e.message));
+      .catch((e) => {
+        if (currentSeriesIdRef.current !== requestedSeriesId) return;
+        setError("Episodlarni olishda xato: " + e.message);
+        setIsSuggesting(false);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeriesId]);
 
@@ -119,7 +119,7 @@ const Movies = () => {
 
       // Formani tozalash, keyingi epizod uchun nom/raqam/video URL avtomatik taklif qilish
       setNewEpisode({ title: "", episodeNumber: "", videoUrl: "" });
-      applyDefaults(updatedEpisodes, selectedSeriesId);
+      setIsSuggesting(true);
       suggestVideoUrl(selectedSeriesId);
       setThumbFile(null);
     } catch (err) {
@@ -191,6 +191,13 @@ const Movies = () => {
             </div>
           </div>
 
+          {isSuggesting && (
+            <div className="flex items-center gap-2 text-sm text-blue-300 bg-blue-900/20 border border-blue-700/40 rounded-lg px-3 py-2 -my-2">
+              <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+              Bunny'dan epizod ma'lumotlari qidirilmoqda...
+            </div>
+          )}
+
           {/* Title */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
@@ -204,8 +211,9 @@ const Movies = () => {
                     onChange={(e) =>
                         setNewEpisode({ ...newEpisode, title: e.target.value })
                     }
-                    className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500"
+                    className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500 disabled:opacity-50"
                     required
+                    disabled={isSuggesting}
                     placeholder="Masalan: 1-Qism: Sarguzasht boshlanishi"
                 />
             </div>
@@ -225,8 +233,9 @@ const Movies = () => {
                     onChange={(e) =>
                         setNewEpisode({ ...newEpisode, episodeNumber: e.target.value })
                     }
-                    className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
+                    className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner disabled:opacity-50"
                     required
+                    disabled={isSuggesting}
                 />
             </div>
           </div>
@@ -251,8 +260,9 @@ const Movies = () => {
                       onChange={(e) =>
                           setNewEpisode({ ...newEpisode, videoUrl: e.target.value })
                       }
-                      className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500"
+                      className="w-full p-3 pl-10 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner placeholder-gray-500 disabled:opacity-50"
                       required
+                      disabled={isSuggesting}
                       placeholder="Video manzilini kiriting"
                   />
               </div>
@@ -298,7 +308,8 @@ const Movies = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 text-white font-semibold text-lg rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-lg shadow-blue-500/50 transform hover:scale-[1.01]"
+            disabled={isSuggesting}
+            className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 text-white font-semibold text-lg rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-lg shadow-blue-500/50 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
             <Save className="w-5 h-5" />
             <span>Epizodni Yaratish</span>

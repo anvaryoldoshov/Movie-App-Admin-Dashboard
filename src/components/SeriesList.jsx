@@ -57,6 +57,9 @@ const SeriesList = () => {
   // Video URL taklifi so'rovi javob berguncha admin boshqa serialga o'tib ketishi mumkin -
   // eski (stale) javob joriy ochiq serialning linkini ustidan yozib qo'ymasligi uchun kuzatiladi
   const suggestRequestSeriesIdRef = useRef(null);
+  // Bunny'dan taklif so'ralayotgan payt (nom/raqam/link hali yozilmagan) UI'da
+  // yuklanish belgisini ko'rsatish va formani vaqtincha bloklash uchun
+  const [isSuggesting, setIsSuggesting] = useState(false);
 
   // --- LOGIKA: ORIGINAL KODDAN O'ZGARIShSIZ SAQLANGAN ---
 
@@ -442,25 +445,16 @@ const SeriesList = () => {
     });
   };
 
-  // Serial nomi va oxirgi epizod raqamidan kelib chiqib, keyingi epizod uchun standart nom/raqamni hisoblaydi
-  const computeEpisodeDefaults = (seriesId, episodesList) => {
-    const s = series.find((item) => item.id === seriesId);
-    const maxNumber = (episodesList || []).reduce((max, ep) => Math.max(max, ep.episodeNumber || 0), 0);
-    const nextNumber = maxNumber + 1;
-    return {
-      episodeNumber: String(nextNumber),
-      title: s ? `${s.title} - ${nextNumber}-qism` : "",
-    };
-  };
-
-  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL maydoniga
-  // qo'yadi. Agar serial Bunny Collection'ga bog'langan bo'lsa, video nomidagi raqam
-  // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
+  // Bunny'ga oldindan yuklab qo'yilgan, hali ishlatilmagan videoni topib, video URL, epizod
+  // raqami va nomini shundan to'ldiradi. Mos video topilmasa (Collection tugagan yoki
+  // sozlanmagan), hech narsa taklif qilinmaydi - noto'g'ri taxminiy qiymat berishdan ko'ra,
+  // admin qo'lda kiritgani ma'qul.
   const suggestVideoUrl = (seriesId) => {
     suggestRequestSeriesIdRef.current = seriesId;
     getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
       // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
       if (suggestRequestSeriesIdRef.current !== seriesId) return;
+      setIsSuggesting(false);
       if (!videoUrl) return;
       const s = series.find((item) => item.id === seriesId);
       setFormData((prev) => ({
@@ -494,10 +488,12 @@ const SeriesList = () => {
         [seriesId]: updatedSeriesEpisodes,
       }));
 
-      // Formani navbatdagi epizod uchun avtomatik nom/raqam bilan tozalash (yopmasdan, ketma-ket qo'shish qulay bo'lsin)
+      // Formani navbatdagi epizod uchun tozalash (yopmasdan, ketma-ket qo'shish qulay bo'lsin) -
+      // nom/raqam/link Bunny'dan taklif kelgach to'ldiriladi
       setFormData((prev) => ({
         ...prev,
-        ...computeEpisodeDefaults(seriesId, updatedSeriesEpisodes),
+        title: "",
+        episodeNumber: "",
         videoUrl: "",
         image: null,
       }));
@@ -505,6 +501,7 @@ const SeriesList = () => {
       setError(null);
       setSuccess("Episode added successfully");
       setTimeout(() => setSuccess(null), 3000);
+      setIsSuggesting(true);
       suggestVideoUrl(seriesId);
     } catch (err) {
       setError(typeof err === "string" ? err : "Epizod qo'shib bo'lmadi.");
@@ -522,7 +519,7 @@ const SeriesList = () => {
           // Boshqa formani yopish
           setEditSeries(null);
           setEditEpisode(null);
-          // Yangi formani ochish, nom/raqamni avtomatik taklif qilib formData'ni tozalash
+          // Yangi formani ochish, nom/raqam/link Bunny'dan taklif kelgach to'ldiriladi
           setAddEpisodeSeriesId(seriesId);
           setFormData({
             title: "",
@@ -532,10 +529,10 @@ const SeriesList = () => {
             status: "",
             monthlyPrice: "",
             quarterlyPrice: "",
-            ...computeEpisodeDefaults(seriesId, episodes[seriesId]),
           });
           setImagePreview(null);
           setFormErrors({});
+          setIsSuggesting(true);
           suggestVideoUrl(seriesId);
       }
   };
@@ -780,6 +777,12 @@ const SeriesList = () => {
                                 <Zap className="w-4 h-4"/>
                                 <span>Yangi Epizod Ma'lumotlari</span>
                             </h4>
+                            {isSuggesting && (
+                                <div className="flex items-center gap-2 text-xs text-blue-300 bg-blue-900/20 border border-blue-700/40 rounded-lg px-3 py-2 mb-3">
+                                    <Loader2 className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
+                                    Bunny'dan epizod ma'lumotlari qidirilmoqda...
+                                </div>
+                            )}
                             <form
                                 onSubmit={(e) => handleAddEpisode(e, s.id)}
                                 className="space-y-3"
@@ -799,7 +802,8 @@ const SeriesList = () => {
                                     value={formData.title}
                                     onChange={handleInputChange}
                                     placeholder="Epizod sarlavhasi"
-                                    className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
+                                    disabled={isSuggesting}
+                                    className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm disabled:opacity-50 ${
                                         formErrors.title ? "border-red-500" : "border-gray-700"
                                     }`}
                                     aria-required="true"
@@ -826,7 +830,8 @@ const SeriesList = () => {
                                         value={formData.episodeNumber}
                                         onChange={handleInputChange}
                                         placeholder="1"
-                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
+                                        disabled={isSuggesting}
+                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm disabled:opacity-50 ${
                                         formErrors.episodeNumber
                                             ? "border-red-500"
                                             : "border-gray-700"
@@ -863,7 +868,8 @@ const SeriesList = () => {
                                         value={formData.videoUrl}
                                         onChange={handleInputChange}
                                         placeholder="Video URL manzili"
-                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm ${
+                                        disabled={isSuggesting}
+                                        className={`w-full p-2.5 bg-gray-800 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm disabled:opacity-50 ${
                                         formErrors.videoUrl
                                             ? "border-red-500"
                                             : "border-gray-700"
@@ -904,7 +910,8 @@ const SeriesList = () => {
 
                                 <button
                                     type="submit"
-                                    className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-bold flex items-center justify-center space-x-2 mt-4 shadow-md shadow-indigo-500/30"
+                                    disabled={isSuggesting}
+                                    className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-bold flex items-center justify-center space-x-2 mt-4 shadow-md shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <Save className="w-5 h-5" />
                                     <span>Saqlash va Qo'shish</span>
