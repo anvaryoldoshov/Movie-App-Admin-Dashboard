@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { getSeries, getEpisodesBySeries, createEpisode, getNextVideoUrl } from "../services/api";
 import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift } from 'lucide-react';
@@ -20,6 +20,13 @@ const Movies = () => {
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  // Admin dropdown'da serialni tez almashtirsa, eski serial uchun ketayotgan
+  // (episode/video URL) so'rovlar keyinroq javob berib, joriy serialning
+  // qiymatlarini eskirgan ma'lumot bilan ustidan yozib qo'ymasligi uchun kuzatiladi
+  const currentSeriesIdRef = useRef(selectedSeriesId);
+  useEffect(() => {
+    currentSeriesIdRef.current = selectedSeriesId;
+  }, [selectedSeriesId]);
 
   useEffect(() => {
     getSeries()
@@ -61,6 +68,8 @@ const Movies = () => {
   // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
   const suggestVideoUrl = (seriesId) => {
     getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
+      // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
+      if (currentSeriesIdRef.current !== seriesId) return;
       if (!videoUrl) return;
       const series = seriesList.find((s) => String(s.id) === String(seriesId));
       setNewEpisode((prev) => ({
@@ -76,11 +85,14 @@ const Movies = () => {
   useEffect(() => {
     setEpisodes([]);
     if (!selectedSeriesId) return;
-    getEpisodesBySeries(selectedSeriesId)
+    const requestedSeriesId = selectedSeriesId;
+    getEpisodesBySeries(requestedSeriesId)
       .then((data) => {
+        // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
+        if (currentSeriesIdRef.current !== requestedSeriesId) return;
         setEpisodes(data);
-        applyDefaults(data, selectedSeriesId);
-        suggestVideoUrl(selectedSeriesId);
+        applyDefaults(data, requestedSeriesId);
+        suggestVideoUrl(requestedSeriesId);
       })
       .catch((e) => setError("Episodlarni olishda xato: " + e.message));
     // eslint-disable-next-line react-hooks/exhaustive-deps

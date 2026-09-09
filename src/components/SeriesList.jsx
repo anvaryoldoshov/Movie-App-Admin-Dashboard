@@ -57,6 +57,9 @@ const SeriesList = () => {
   const [draggedId, setDraggedId] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
   const modalRef = useRef(null);
+  // Video URL taklifi so'rovi javob berguncha admin boshqa serialga o'tib ketishi mumkin -
+  // eski (stale) javob joriy ochiq serialning linkini ustidan yozib qo'ymasligi uchun kuzatiladi
+  const suggestRequestSeriesIdRef = useRef(null);
 
   // --- LOGIKA: ORIGINAL KODDAN O'ZGARIShSIZ SAQLANGAN ---
 
@@ -466,7 +469,10 @@ const SeriesList = () => {
   // qo'yadi. Agar serial Bunny Collection'ga bog'langan bo'lsa, video nomidagi raqam
   // (aniqroq manba) episode raqami/nomini ham qayta hisoblaydi.
   const suggestVideoUrl = (seriesId) => {
+    suggestRequestSeriesIdRef.current = seriesId;
     getNextVideoUrl(seriesId).then(({ videoUrl, episodeNumber }) => {
+      // Admin shu orada boshqa serialga o'tgan bo'lsa, bu eskirgan javobni e'tiborsiz qoldiramiz
+      if (suggestRequestSeriesIdRef.current !== seriesId) return;
       if (!videoUrl) return;
       const s = series.find((item) => item.id === seriesId);
       setFormData((prev) => ({
