@@ -13,9 +13,6 @@ const Movies = () => {
     title: "",
     episodeNumber: "",
     videoUrl: "",
-    durationHours: "",
-    durationMinutes: "",
-    durationSeconds: "",
   });
   const [thumbFile, setThumbFile] = useState(null);
   const [error, setError] = useState("");
@@ -112,9 +109,6 @@ const Movies = () => {
     formData.append("title", newEpisode.title);
     formData.append("episodeNumber", newEpisode.episodeNumber);
     formData.append("videoUrl", newEpisode.videoUrl);
-    if (newEpisode.durationHours) formData.append("durationHours", newEpisode.durationHours);
-    if (newEpisode.durationMinutes) formData.append("durationMinutes", newEpisode.durationMinutes);
-    if (newEpisode.durationSeconds) formData.append("durationSeconds", newEpisode.durationSeconds);
     if (thumbFile) formData.append("image", thumbFile);
 
     try {
@@ -124,7 +118,7 @@ const Movies = () => {
       setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
 
       // Formani tozalash, keyingi epizod uchun nom/raqam/video URL avtomatik taklif qilish
-      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "", durationHours: "", durationMinutes: "", durationSeconds: "" });
+      setNewEpisode({ title: "", episodeNumber: "", videoUrl: "" });
       applyDefaults(updatedEpisodes, selectedSeriesId);
       suggestVideoUrl(selectedSeriesId);
       setThumbFile(null);
@@ -243,50 +237,6 @@ const Movies = () => {
             Fasl va bonus holati epizod raqamiga qarab avtomatik belgilanadi (seriali va fasllar sozlamalariga qarab).{" "}
             <RouterLink to="/seasons" className="text-yellow-400 hover:text-yellow-300">Fasllarni boshqarish →</RouterLink>
           </p>
-
-          {/* Duration */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Davomiyligi:
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-                <div>
-                    <label className="block text-xs text-gray-500 mb-1">Soat</label>
-                    <input
-                        type="number"
-                        min="0"
-                        value={newEpisode.durationHours}
-                        onChange={(e) => setNewEpisode({ ...newEpisode, durationHours: e.target.value })}
-                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-                        placeholder="0"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-500 mb-1">Daqiqa</label>
-                    <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={newEpisode.durationMinutes}
-                        onChange={(e) => setNewEpisode({ ...newEpisode, durationMinutes: e.target.value })}
-                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-                        placeholder="45"
-                    />
-                </div>
-                <div>
-                    <label className="block text-xs text-gray-500 mb-1">Soniya</label>
-                    <input
-                        type="number"
-                        min="0"
-                        max="59"
-                        value={newEpisode.durationSeconds}
-                        onChange={(e) => setNewEpisode({ ...newEpisode, durationSeconds: e.target.value })}
-                        className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-inner"
-                        placeholder="30"
-                    />
-                </div>
-            </div>
-          </div>
 
           {/* Video Link */}
           <div>

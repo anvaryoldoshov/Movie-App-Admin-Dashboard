@@ -34,9 +34,6 @@ const SeriesList = () => {
     title: "",
     episodeNumber: "",
     videoUrl: "",
-    durationHours: "",
-    durationMinutes: "",
-    durationSeconds: "",
     image: null,
     status: "",
     monthlyPrice: "",
@@ -173,9 +170,6 @@ const SeriesList = () => {
           title: "",
           episodeNumber: "",
           videoUrl: "",
-          durationHours: "",
-          durationMinutes: "",
-          durationSeconds: "",
           image: null,
           status: "",
           monthlyPrice: "",
@@ -260,9 +254,6 @@ const SeriesList = () => {
       title: episode.title,
       episodeNumber: episode.episodeNumber,
       videoUrl: episode.videoUrl,
-      durationHours: episode.durationHours || "",
-      durationMinutes: episode.durationMinutes || "",
-      durationSeconds: episode.durationSeconds || "",
       image: null,
     });
     setImagePreview(
@@ -392,9 +383,6 @@ const SeriesList = () => {
     form.append("title", formData.title);
     form.append("episodeNumber", formData.episodeNumber);
     form.append("videoUrl", formData.videoUrl);
-    if (formData.durationHours) form.append("durationHours", formData.durationHours);
-    if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
-    if (formData.durationSeconds) form.append("durationSeconds", formData.durationSeconds);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -494,9 +482,6 @@ const SeriesList = () => {
     form.append("title", formData.title);
     form.append("episodeNumber", formData.episodeNumber);
     form.append("videoUrl", formData.videoUrl);
-    if (formData.durationHours) form.append("durationHours", formData.durationHours);
-    if (formData.durationMinutes) form.append("durationMinutes", formData.durationMinutes);
-    if (formData.durationSeconds) form.append("durationSeconds", formData.durationSeconds);
     if (formData.image) {
       form.append("image", formData.image);
     }
@@ -515,9 +500,6 @@ const SeriesList = () => {
         ...computeEpisodeDefaults(seriesId, updatedSeriesEpisodes),
         videoUrl: "",
         image: null,
-        durationHours: "",
-        durationMinutes: "",
-        durationSeconds: "",
       }));
       setImagePreview(null);
       setError(null);
@@ -858,49 +840,6 @@ const SeriesList = () => {
                                     )}
                                 </div>
 
-                                {/* Duration */}
-                                <div>
-                                    <label className="block text-xs font-semibold text-gray-300 uppercase mb-1">
-                                        Davomiyligi (Soat : Daqiqa : Soniya)
-                                    </label>
-                                    <div className="grid grid-cols-3 gap-1.5">
-                                        <input
-                                            type="number"
-                                            name="durationHours"
-                                            value={formData.durationHours}
-                                            onChange={handleInputChange}
-                                            placeholder="00"
-                                            min="0"
-                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
-                                        />
-                                        <input
-                                            type="number"
-                                            name="durationMinutes"
-                                            value={formData.durationMinutes}
-                                            onChange={handleInputChange}
-                                            placeholder="00"
-                                            min="0"
-                                            max="59"
-                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
-                                        />
-                                        <input
-                                            type="number"
-                                            name="durationSeconds"
-                                            value={formData.durationSeconds}
-                                            onChange={handleInputChange}
-                                            placeholder="00"
-                                            min="0"
-                                            max="59"
-                                            className="w-full p-2 bg-gray-800 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-sm text-center"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-3 gap-1.5 mt-0.5">
-                                        <span className="text-center text-gray-500 text-xs">Soat</span>
-                                        <span className="text-center text-gray-500 text-xs">Daqiqa</span>
-                                        <span className="text-center text-gray-500 text-xs">Soniya</span>
-                                    </div>
-                                </div>
-
                                 {/* Fasl va bepul holati avtomatik hisoblanadi */}
                                 <p className="text-xs text-gray-500 flex items-center gap-1.5">
                                     <Gift className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
@@ -1225,53 +1164,6 @@ const SeriesList = () => {
                         aria-required="true"
                     />
                     {formErrors.episodeNumber && (<p className="text-red-400 text-xs mt-1">{formErrors.episodeNumber}</p>)}
-                </div>
-
-                {/* Duration */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                        Davomiyligi (Soat : Daqiqa : Soniya)
-                    </label>
-                    <div className="grid grid-cols-3 gap-3">
-                        <div>
-                            <input
-                                type="number"
-                                name="durationHours"
-                                value={formData.durationHours}
-                                onChange={handleInputChange}
-                                placeholder="0"
-                                min="0"
-                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
-                            />
-                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Soat</span>
-                        </div>
-                        <div>
-                            <input
-                                type="number"
-                                name="durationMinutes"
-                                value={formData.durationMinutes}
-                                onChange={handleInputChange}
-                                placeholder="0"
-                                min="0"
-                                max="59"
-                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
-                            />
-                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Daqiqa</span>
-                        </div>
-                        <div>
-                            <input
-                                type="number"
-                                name="durationSeconds"
-                                value={formData.durationSeconds}
-                                onChange={handleInputChange}
-                                placeholder="0"
-                                min="0"
-                                max="59"
-                                className="w-full p-4 bg-gray-900 border border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white text-2xl font-bold text-center"
-                            />
-                            <span className="block text-center text-sm text-gray-400 mt-1 font-medium">Soniya</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Fasl va bepul holati avtomatik hisoblanadi */}
