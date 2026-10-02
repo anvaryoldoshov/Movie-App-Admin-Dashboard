@@ -62,6 +62,7 @@ const CreateSeries = () => {
       if (quarterlyPrice) formData.append("quarterlyPrice", quarterlyPrice);
       if (freeEpisodesCount) formData.append("freeEpisodesCount", freeEpisodesCount);
       if (bunnyCollectionId) formData.append("bunnyCollectionId", bunnyCollectionId);
+      formData.append("subscriptionBased", subscriptionBased);
       selectedGenreIds.forEach((id) => formData.append("genreIds", id));
       formData.append("image", image);
 
@@ -158,7 +159,27 @@ const CreateSeries = () => {
           </div>
 
           {/* Price Fields */}
-          <div className="grid grid-cols-2 gap-4">
+          
+          {/* Subscription Toggle */}
+          <div className="flex items-center gap-3 p-4 bg-gray-800/60 border border-gray-700 rounded-lg">
+            <input
+              type="checkbox"
+              id="subscriptionBased"
+              checked={subscriptionBased}
+              onChange={(e) => setSubscriptionBased(e.target.checked)}
+              className="w-5 h-5 accent-blue-500 rounded focus:ring-blue-500 cursor-pointer"
+            />
+            <label htmlFor="subscriptionBased" className="text-sm font-medium text-gray-300 cursor-pointer select-none">
+              Bu serial "Obuna" orqali taqdim etiladi
+              <p className="text-xs text-gray-500 font-normal mt-0.5">
+                Agar belgilansa, quyidagi narxlar ishlatilmaydi va foydalanuvchilar obuna tarifini sotib olishlari kerak bo'ladi.
+              </p>
+            </label>
+          </div>
+
+          {/* Price Fields */}
+          {!subscriptionBased && (
+            <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">
                 1 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
