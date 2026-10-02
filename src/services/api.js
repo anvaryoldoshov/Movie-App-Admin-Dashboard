@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.tarixiykinolar.uz";
@@ -645,4 +645,44 @@ export const getRecentSounds = async () => {
   }
 };
 
+
+// ─── SUBSCRIPTION PLAN FUNCTIONS ──────────────────────────────────────────────
+export const getSubscriptionPlans = async () => {
+  try {
+    const response = await api.get('/admin/subscription/plans');
+    return response.data;
+  } catch (error) {
+    console.error('Get subscription plans error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Obuna tariflarini yuklashda xatolik';
+  }
+};
+
+export const createSubscriptionPlan = async (planData) => {
+  try {
+    const response = await api.post('/admin/subscription/plans', planData);
+    return response.data;
+  } catch (error) {
+    console.error('Create subscription plan error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Obuna tarifi qo'shishda xatolik";
+  }
+};
+
+export const updateSubscriptionPlan = async (id, planData) => {
+  try {
+    const response = await api.put(/admin/subscription/plans/, planData);
+    return response.data;
+  } catch (error) {
+    console.error('Update subscription plan error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Obuna tarifini yangilashda xatolik';
+  }
+};
+
+export const deleteSubscriptionPlan = async (id) => {
+  try {
+    await api.delete(/admin/subscription/plans/);
+  } catch (error) {
+    console.error('Delete subscription plan error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Obuna tarifini o'chirishda xatolik";
+  }
+};
 export default api;

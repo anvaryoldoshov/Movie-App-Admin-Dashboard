@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { createSeries, createSeason, importEpisodesFromBunny, getGenres } from "../services/api";
 import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers, Video, EyeOff, Loader2 } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
 
@@ -12,6 +12,7 @@ const CreateSeries = () => {
   const [freeEpisodesCount, setFreeEpisodesCount] = useState("");
   const [bunnyCollectionId, setBunnyCollectionId] = useState("");
   const [importAllFromBunny, setImportAllFromBunny] = useState(true);
+  const [subscriptionBased, setSubscriptionBased] = useState(false);
   const [seasonRows, setSeasonRows] = useState([{ ...emptySeasonRow(), seasonNumber: "1" }]);
   const [image, setImage] = useState(null);
   const [message, setMessage] = useState("");
@@ -46,7 +47,7 @@ const CreateSeries = () => {
 
     if (!title || !image) {
       // Message UI ga moslash
-      setMessage("Barcha maydonlarni to‘ldiring.");
+      setMessage("Barcha maydonlarni toâ€˜ldiring.");
       return;
     }
 
@@ -89,14 +90,14 @@ const CreateSeries = () => {
           if (importResult.error) {
             extraInfo += ` (Bunny'dan import qilinmadi: ${importResult.error})`;
           } else {
-            extraInfo += ` — Bunny'dan ${importResult.imported} ta epizod import qilindi`;
+            extraInfo += ` â€” Bunny'dan ${importResult.imported} ta epizod import qilindi`;
           }
         } catch (importErr) {
           extraInfo += " (Bunny'dan import qilishda xatolik yuz berdi)";
         }
       }
 
-      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi (yashirin holatda). ID: ${res.id}${extraInfo}`);
+      setMessage(`âœ… Yangi series muvaffaqiyatli yaratildi (yashirin holatda). ID: ${res.id}${extraInfo}`);
       setTitle("");
       setImage(null);
       setMonthlyPrice("");
@@ -104,11 +105,12 @@ const CreateSeries = () => {
       setFreeEpisodesCount("");
       setBunnyCollectionId("");
       setImportAllFromBunny(true);
+      setSubscriptionBased(false);
       setSeasonRows([{ ...emptySeasonRow(), seasonNumber: "1" }]);
       setSelectedGenreIds([]);
     } catch (error) {
       console.error(error);
-      setMessage("❌ Xatolik yuz berdi. Series yaratilmadi.");
+      setMessage("âŒ Xatolik yuz berdi. Series yaratilmadi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -124,7 +126,7 @@ const CreateSeries = () => {
         {/* Sarlavha */}
         <div className="mb-8">
             <h2 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
-                Series Yaratish ✨
+                Series Yaratish âœ¨
             </h2>
             <p className="text-gray-400 text-center mt-2 text-sm">Series haqidagi asosiy ma'lumotlarni kiriting.</p>
         </div>
@@ -151,7 +153,7 @@ const CreateSeries = () => {
           <div className="flex items-start gap-2 p-3 bg-gray-800/60 border border-gray-700 rounded-lg">
             <EyeOff className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-gray-400">
-              Yangi serial avtomatik <span className="text-gray-200 font-medium">yashirin</span> holatda yaratiladi — platformada ko'rinmaydi. Epizodlarni tekshirib bo'lgach, "Seriallar ro'yxati"da holatini <span className="text-gray-200 font-medium">"Efirda"</span>ga o'zgartirib, foydalanuvchilarga ochishingiz mumkin.
+              Yangi serial avtomatik <span className="text-gray-200 font-medium">yashirin</span> holatda yaratiladi â€” platformada ko'rinmaydi. Epizodlarni tekshirib bo'lgach, "Seriallar ro'yxati"da holatini <span className="text-gray-200 font-medium">"Efirda"</span>ga o'zgartirib, foydalanuvchilarga ochishingiz mumkin.
             </p>
           </div>
 
@@ -236,7 +238,7 @@ const CreateSeries = () => {
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
               <Layers className="w-4 h-4 text-orange-400" />
-              Fasllar: <span className="text-gray-500 text-xs">(ixtiyoriy — epizod qo'shilganda avtomatik taqsimlash uchun)</span>
+              Fasllar: <span className="text-gray-500 text-xs">(ixtiyoriy â€” epizod qo'shilganda avtomatik taqsimlash uchun)</span>
             </label>
             <div className="space-y-2">
               {seasonRows.map((row) => (
@@ -244,7 +246,7 @@ const CreateSeries = () => {
                   <input
                     type="number"
                     min="1"
-                    placeholder="№"
+                    placeholder="â„–"
                     value={row.seasonNumber}
                     onChange={(e) => updateSeasonRow(row.key, "seasonNumber", e.target.value)}
                     className="w-16 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-sm"
@@ -372,7 +374,7 @@ const CreateSeries = () => {
                 Saqlanmoqda...
               </>
             ) : (
-              <>➕ Seriesni Saqlash</>
+              <>âž• Seriesni Saqlash</>
             )}
           </button>
 
@@ -380,7 +382,7 @@ const CreateSeries = () => {
           {message && (
             <div
                 className={`p-3 rounded-lg text-center font-medium ${
-                    message.startsWith("❌")
+                    message.startsWith("âŒ")
                         ? "bg-red-900/40 border border-red-600 text-red-300"
                         : "bg-green-900/40 border border-green-600 text-green-300"
                 } transition-all duration-500 ease-in-out`}

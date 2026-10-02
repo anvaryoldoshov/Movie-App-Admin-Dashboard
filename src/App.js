@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { BrowserRouter as Router, Switch, Route, Redirect } from "react-router-dom";
 import Login from "./components/Login";
 import Movies from "./components/Movies";
@@ -14,6 +14,7 @@ import SendNotification from "./components/SendNotification";
 import Statistics from "./components/Statistics";
 import GenreManagement from "./components/GenreManagement";
 import SeasonManagement from "./components/SeasonManagement";
+import SubscriptionPlans from "./components/SubscriptionPlans";
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
             <ProtectedRoute path="/statistics" component={Statistics} />
             <ProtectedRoute path="/genres" component={GenreManagement} />
             <ProtectedRoute path="/seasons" component={SeasonManagement} />
+            <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
             <Redirect to="/login" />
           </Switch>
         </Route>
@@ -45,3 +47,4 @@ function App() {
 }
 
 export default App;
+
