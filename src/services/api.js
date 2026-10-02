@@ -669,7 +669,7 @@ export const createSubscriptionPlan = async (planData) => {
 
 export const updateSubscriptionPlan = async (id, planData) => {
   try {
-    const response = await api.put(/admin/subscription/plans/, planData);
+    const response = await api.put(`/admin/subscription/plans/${id}`, planData);
     return response.data;
   } catch (error) {
     console.error('Update subscription plan error:', error.response?.data || error.message);
@@ -679,10 +679,11 @@ export const updateSubscriptionPlan = async (id, planData) => {
 
 export const deleteSubscriptionPlan = async (id) => {
   try {
-    await api.delete(/admin/subscription/plans/);
+    await api.delete(`/admin/subscription/plans/${id}`);
   } catch (error) {
     console.error('Delete subscription plan error:', error.response?.data || error.message);
     throw error.response?.data?.message || "Obuna tarifini o'chirishda xatolik";
   }
 };
 export default api;
+
