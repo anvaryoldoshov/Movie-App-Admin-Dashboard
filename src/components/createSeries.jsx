@@ -208,6 +208,8 @@ const CreateSeries = () => {
             </div>
           </div>
 
+          )}
+
           {/* Free episodes count */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
