@@ -1,4 +1,4 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 const API_URL = process.env.REACT_APP_API_URL || "https://api.tarixiykinolar.uz";

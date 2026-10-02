@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { createSeries, createSeason, importEpisodesFromBunny, getGenres } from "../services/api";
 import { Upload, XCircle, CheckCircle, Plus, Trash2, Gift, Layers, Video, EyeOff, Loader2 } from 'lucide-react'; // Keling, zamonaviy ikonkalarni qo'shamiz
 

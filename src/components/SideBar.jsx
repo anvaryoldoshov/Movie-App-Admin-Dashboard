@@ -1,4 +1,4 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 // lucide-react ikonalaridan foydalanilgan
 import { Menu, X, MonitorPlay, Film, Users, LayoutList, Image, LogOut, Bell, BarChart3, Tags, Layers, CreditCard } from "lucide-react";
@@ -32,9 +32,9 @@ const Sidebar = () => {
   // Navigatsiya elementlari ro'yxati (kodni tozalash uchun)
   const navItems = [
     { to: "/create/series", icon: Film, label: "Serial yaratish", color: "text-blue-400" },
-    { to: "/movies", icon: MonitorPlay, label: "Epizod qoâ€˜shish", color: "text-green-400" },
-    { to: "/user-table", icon: Users, label: "Foydalanuvchilar roâ€˜yxati", color: "text-yellow-400" },
-    { to: "/series-list", icon: LayoutList, label: "Seriallar roâ€˜yxati", color: "text-purple-400" },
+    { to: "/movies", icon: MonitorPlay, label: "Epizod qo'shish", color: "text-green-400" },
+    { to: "/user-table", icon: Users, label: "Foydalanuvchilar ro'yxati", color: "text-yellow-400" },
+    { to: "/series-list", icon: LayoutList, label: "Seriallar ro'yxati", color: "text-purple-400" },
     { to: "/banners-list", icon: Image, label: "Bannerlar boshqaruvi", color: "text-indigo-400" },
     { to: "/genres", icon: Tags, label: "Janrlar boshqaruvi", color: "text-orange-400" },
     { to: "/seasons", icon: Layers, label: "Fasllar boshqaruvi", color: "text-amber-400" },
