@@ -47,7 +47,7 @@ const CreateSeries = () => {
 
     if (!title || !image) {
       // Message UI ga moslash
-      setMessage("Barcha maydonlarni toâ€˜ldiring.");
+      setMessage("Barcha maydonlarni to'ldiring.");
       return;
     }
 
@@ -91,14 +91,14 @@ const CreateSeries = () => {
           if (importResult.error) {
             extraInfo += ` (Bunny'dan import qilinmadi: ${importResult.error})`;
           } else {
-            extraInfo += ` â€” Bunny'dan ${importResult.imported} ta epizod import qilindi`;
+            extraInfo += ` — Bunny'dan ${importResult.imported} ta epizod import qilindi`;
           }
         } catch (importErr) {
           extraInfo += " (Bunny'dan import qilishda xatolik yuz berdi)";
         }
       }
 
-      setMessage(`âœ… Yangi series muvaffaqiyatli yaratildi (yashirin holatda). ID: ${res.id}${extraInfo}`);
+      setMessage(`✅ Yangi series muvaffaqiyatli yaratildi (yashirin holatda). ID: ${res.id}${extraInfo}`);
       setTitle("");
       setImage(null);
       setMonthlyPrice("");
@@ -111,7 +111,7 @@ const CreateSeries = () => {
       setSelectedGenreIds([]);
     } catch (error) {
       console.error(error);
-      setMessage("âŒ Xatolik yuz berdi. Series yaratilmadi.");
+      setMessage("❌ Xatolik yuz berdi. Series yaratilmadi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -120,21 +120,21 @@ const CreateSeries = () => {
   return (
     // Responsive: Kichik ekranlarda chap margin (ml-64) olib tashlanadi
     <div className="min-h-screen bg-[#0f111a] flex justify-center items-center p-4 sm:p-6 lg:p-8 lg:ml-64 text-white">
-      
+
       {/* Kartaning kengligi va stili */}
       <div className="max-w-xl w-full bg-[#1c1e2c] p-6 sm:p-8 rounded-2xl shadow-2xl border border-gray-700">
-        
+
         {/* Sarlavha */}
         <div className="mb-8">
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
-                Series Yaratish âœ¨
-            </h2>
-            <p className="text-gray-400 text-center mt-2 text-sm">Series haqidagi asosiy ma'lumotlarni kiriting.</p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-center tracking-tight text-blue-400">
+            Series Yaratish ✨
+          </h2>
+          <p className="text-gray-400 text-center mt-2 text-sm">Series haqidagi asosiy ma'lumotlarni kiriting.</p>
         </div>
-        
+
         {/* Form Elementlari */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          
+
           {/* Title Input */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
@@ -154,12 +154,12 @@ const CreateSeries = () => {
           <div className="flex items-start gap-2 p-3 bg-gray-800/60 border border-gray-700 rounded-lg">
             <EyeOff className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
             <p className="text-xs text-gray-400">
-              Yangi serial avtomatik <span className="text-gray-200 font-medium">yashirin</span> holatda yaratiladi â€” platformada ko'rinmaydi. Epizodlarni tekshirib bo'lgach, "Seriallar ro'yxati"da holatini <span className="text-gray-200 font-medium">"Efirda"</span>ga o'zgartirib, foydalanuvchilarga ochishingiz mumkin.
+              Yangi serial avtomatik <span className="text-gray-200 font-medium">yashirin</span> holatda yaratiladi — platformada ko'rinmaydi. Epizodlarni tekshirib bo'lgach, "Seriallar ro'yxati"da holatini <span className="text-gray-200 font-medium">"Efirda"</span>ga o'zgartirib, foydalanuvchilarga ochishingiz mumkin.
             </p>
           </div>
 
           {/* Price Fields */}
-          
+
           {/* Subscription Toggle */}
           <div className="flex items-center gap-3 p-4 bg-gray-800/60 border border-gray-700 rounded-lg">
             <input
@@ -180,33 +180,33 @@ const CreateSeries = () => {
           {/* Price Fields */}
           {!subscriptionBased && (
             <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                1 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
-                value={monthlyPrice}
-                onChange={(e) => setMonthlyPrice(e.target.value)}
-                placeholder="Masalan: 15000"
-              />
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  1 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+                  value={monthlyPrice}
+                  onChange={(e) => setMonthlyPrice(e.target.value)}
+                  placeholder="Masalan: 15000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">
+                  3 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
+                  value={quarterlyPrice}
+                  onChange={(e) => setQuarterlyPrice(e.target.value)}
+                  placeholder="Masalan: 40000"
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium mb-2 text-gray-300">
-                3 Oylik narx (so'm) <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
-              </label>
-              <input
-                type="number"
-                min="0"
-                className="w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-gray-500 shadow-inner"
-                value={quarterlyPrice}
-                onChange={(e) => setQuarterlyPrice(e.target.value)}
-                placeholder="Masalan: 40000"
-              />
-            </div>
-          </div>
 
           )}
 
@@ -261,7 +261,7 @@ const CreateSeries = () => {
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300 flex items-center gap-2">
               <Layers className="w-4 h-4 text-orange-400" />
-              Fasllar: <span className="text-gray-500 text-xs">(ixtiyoriy â€” epizod qo'shilganda avtomatik taqsimlash uchun)</span>
+              Fasllar: <span className="text-gray-500 text-xs">(ixtiyoriy — epizod qo'shilganda avtomatik taqsimlash uchun)</span>
             </label>
             <div className="space-y-2">
               {seasonRows.map((row) => (
@@ -269,7 +269,7 @@ const CreateSeries = () => {
                   <input
                     type="number"
                     min="1"
-                    placeholder="â„–"
+                    placeholder="№"
                     value={row.seasonNumber}
                     onChange={(e) => updateSeasonRow(row.key, "seasonNumber", e.target.value)}
                     className="w-16 p-2.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-white text-sm"
@@ -326,11 +326,10 @@ const CreateSeries = () => {
                       type="button"
                       key={genre.id}
                       onClick={() => toggleGenre(genre.id)}
-                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${
-                        isSelected
+                      className={`px-3 py-1.5 rounded-full text-sm font-medium border transition ${isSelected
                           ? "bg-indigo-600 border-indigo-500 text-white"
                           : "bg-[#0f111a] border-gray-600 text-gray-300 hover:bg-gray-700/50"
-                      }`}
+                        }`}
                     >
                       {genre.name}
                     </button>
@@ -357,29 +356,29 @@ const CreateSeries = () => {
               <label
                 htmlFor="image-upload"
                 className={`flex items-center justify-between w-full p-3 border rounded-lg cursor-pointer transition duration-300
-                  ${image 
-                      ? 'bg-green-800/20 border-green-600 hover:bg-green-800/40' 
-                      : 'bg-[#0f111a] border-gray-600 hover:bg-gray-700/50'
+                  ${image
+                    ? 'bg-green-800/20 border-green-600 hover:bg-green-800/40'
+                    : 'bg-[#0f111a] border-gray-600 hover:bg-gray-700/50'
                   }
                 `}
               >
                 <div className="flex items-center space-x-3 truncate">
-                    {image ? (
-                        <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
-                    ) : (
-                        <Upload className="w-5 h-5 text-gray-400 flex-shrink-0" />
-                    )}
-                    <span className={`truncate ${image ? 'text-green-400' : 'text-gray-400'}`}>
+                  {image ? (
+                    <CheckCircle className="w-5 h-5 text-green-400 flex-shrink-0" />
+                  ) : (
+                    <Upload className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  )}
+                  <span className={`truncate ${image ? 'text-green-400' : 'text-gray-400'}`}>
                     {image ? image.name : "Rasmni tanlash uchun bosing"}
-                    </span>
+                  </span>
                 </div>
-                
+
                 {image && (
-                    <XCircle 
-                        className="w-5 h-5 text-red-400 hover:text-red-500 cursor-pointer flex-shrink-0" 
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImage(null); }}
-                        title="Rasmni o'chirish"
-                    />
+                  <XCircle
+                    className="w-5 h-5 text-red-400 hover:text-red-500 cursor-pointer flex-shrink-0"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImage(null); }}
+                    title="Rasmni o'chirish"
+                  />
                 )}
               </label>
             </div>
@@ -397,17 +396,16 @@ const CreateSeries = () => {
                 Saqlanmoqda...
               </>
             ) : (
-              <>âž• Seriesni Saqlash</>
+              <>➕ Seriesni Saqlash</>
             )}
           </button>
 
           {/* Message */}
           {message && (
             <div
-                className={`p-3 rounded-lg text-center font-medium ${
-                    message.startsWith("âŒ")
-                        ? "bg-red-900/40 border border-red-600 text-red-300"
-                        : "bg-green-900/40 border border-green-600 text-green-300"
+              className={`p-3 rounded-lg text-center font-medium ${message.startsWith("❌")
+                  ? "bg-red-900/40 border border-red-600 text-red-300"
+                  : "bg-green-900/40 border border-green-600 text-green-300"
                 } transition-all duration-500 ease-in-out`}
             >
               {message}

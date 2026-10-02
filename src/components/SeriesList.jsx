@@ -570,7 +570,7 @@ const SeriesList = () => {
       </h1>
       <p className="text-center text-gray-500 text-sm mb-8 flex items-center justify-center gap-1.5">
         <ArrowUp className="w-4 h-4" />
-        Tartibni o'zgartirish uchun â†‘/â†“ tugmalaridan foydalaning yoki tutqichni ushlab torting
+        Tartibni o'zgartirish uchun ↑/↓ tugmalaridan foydalaning yoki tutqichni ushlab torting
       </p>
       <div className="border-b-2 border-indigo-500/50 mb-8" />
       
@@ -823,7 +823,7 @@ const SeriesList = () => {
                                         htmlFor={`episode-number-add-${s.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
-                                        Epizod Ã¢â€žâ€“ <span className="text-red-500">*</span>
+                                        Epizod № <span className="text-red-500">*</span>
                                     </label>
                                     <input
                                         id={`episode-number-add-${s.id}`}
@@ -851,7 +851,7 @@ const SeriesList = () => {
                                 <p className="text-xs text-gray-500 flex items-center gap-1.5">
                                     <Gift className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
                                     Fasl va bonus holati epizod raqamiga qarab avtomatik belgilanadi.{" "}
-                                    <Link to="/seasons" className="text-orange-400 hover:text-orange-300">Fasllarni boshqarish â†’</Link>
+                                    <Link to="/seasons" className="text-orange-400 hover:text-orange-300">Fasllarni boshqarish →</Link>
                                 </p>
 
                                 {/* Video URL */}
@@ -861,7 +861,7 @@ const SeriesList = () => {
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                         Video URL <span className="text-red-500">*</span>
-                                        <span className="normal-case text-gray-500"> â€” Bunny'ga yuklangan bo'lsa avtomatik taklif qilinadi</span>
+                                        <span className="normal-case text-gray-500"> — Bunny'ga yuklangan bo'lsa avtomatik taklif qilinadi</span>
                                     </label>
                                     <input
                                         id={`video-url-add-${s.id}`}
@@ -891,7 +891,7 @@ const SeriesList = () => {
                                         htmlFor={`episode-image-add-${s.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
-                                        Rasm (Thumbnail) <span className="normal-case text-gray-500">â€” ixtiyoriy, tanlamasangiz Bunny'dan avtomatik olinadi</span>
+                                        Rasm (Thumbnail) <span className="normal-case text-gray-500">— ixtiyoriy, tanlamasangiz Bunny'dan avtomatik olinadi</span>
                                     </label>
                                     <input
                                         id={`episode-image-add-${s.id}`}
@@ -1179,7 +1179,7 @@ const SeriesList = () => {
                 <p className="text-xs text-gray-500 flex items-center gap-1.5">
                     <Gift className="w-3.5 h-3.5 text-yellow-500 flex-shrink-0" />
                     Fasl va bonus holati epizod raqamiga qarab avtomatik belgilanadi.{" "}
-                    <Link to="/seasons" className="text-orange-400 hover:text-orange-300">Fasllarni boshqarish â†’</Link>
+                    <Link to="/seasons" className="text-orange-400 hover:text-orange-300">Fasllarni boshqarish →</Link>
                 </p>
 
                 {/* Video URL */}

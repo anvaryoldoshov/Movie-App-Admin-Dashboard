@@ -122,7 +122,7 @@ const BannerComponent = () => {
       id: banner.id,
       image: null,
       imageUrl: banner.image,
-      // âœ¨ TUZATISH: Endi to'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
+      // ✨ TUZATISH: Endi to'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
       seriesId: banner.seriesId || '' 
     });
     
@@ -299,7 +299,7 @@ const BannerComponent = () => {
                   <div className='p-4'>
                     <p className="text-sm text-gray-300 font-medium mb-3">
                         Serial: <span className='text-blue-400 font-semibold'>
-                            {/* âœ¨ TUZATISH: banner.seriesTitle (yoki seriesId) ishlatilmoqda */}
+                            {/* ✨ TUZATISH: banner.seriesTitle (yoki seriesId) ishlatilmoqda */}
                             {banner.seriesTitle || (banner.seriesId ? `ID: ${banner.seriesId}` : 'Serial ma\'lumoti yo\'q')}
                         </span>
                     </p>
@@ -311,7 +311,7 @@ const BannerComponent = () => {
                         Tahrirlash
                       </button>
                       <button
-                        // âœ¨ TUZATISH: To'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
+                        // ✨ TUZATISH: To'g'ridan-to'g'ri banner.seriesId ishlatilmoqda
                         onClick={() => handleDelete(banner.id, banner.seriesId)}
                         className="flex-1 px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium"
                       >

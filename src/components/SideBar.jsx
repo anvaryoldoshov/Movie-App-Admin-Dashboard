@@ -134,7 +134,7 @@ const Sidebar = () => {
                 onClick={cancelLogout}
                 className="flex-1 bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg transition duration-200 font-medium"
               >
-                Yoâ€˜q, qolaman
+                Yo'q, qolaman
               </button>
               <button
                 onClick={confirmLogout}
