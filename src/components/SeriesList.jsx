@@ -39,7 +39,9 @@ const SeriesList = () => {
     monthlyPrice: "",
     quarterlyPrice: "",
     genreIds: [],
-    freeEpisodesCount: "",
+    telegramFree: false,
+    telegramFreeUrl: "",
+    telegramFreeCount: "",
     bunnyCollectionId: "",
   });
   const [genres, setGenres] = useState([]);
@@ -243,7 +245,9 @@ const SeriesList = () => {
       monthlyPrice: series.monthlyPrice != null ? String(series.monthlyPrice) : "",
       quarterlyPrice: series.quarterlyPrice != null ? String(series.quarterlyPrice) : "",
       genreIds: (series.genres || []).map((g) => g.id),
-      freeEpisodesCount: series.freeEpisodesCount != null ? String(series.freeEpisodesCount) : "",
+      telegramFree: !!series.telegramFreeUrl,
+      telegramFreeUrl: series.telegramFreeUrl || "",
+      telegramFreeCount: series.telegramFreeCount != null ? String(series.telegramFreeCount) : "",
       bunnyCollectionId: series.bunnyCollectionId || "",
       subscriptionBased: series.subscriptionBased || false,
     });
@@ -343,7 +347,13 @@ const SeriesList = () => {
     form.append("status", formData.status);
     if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
     if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
-    if (formData.freeEpisodesCount) form.append("freeEpisodesCount", formData.freeEpisodesCount);
+    // Galochka olib tashlansa havola yuborilmaydi — backend Telegram ma'lumotini tozalaydi.
+    if (formData.telegramFree && formData.telegramFreeUrl.trim()) {
+      form.append("telegramFreeUrl", formData.telegramFreeUrl.trim());
+      if (formData.telegramFreeCount) form.append("telegramFreeCount", formData.telegramFreeCount);
+    }
+    // Yuborilmasa backend false deb oladi va obuna seriali oddiy serialga aylanib qolardi.
+    form.append("subscriptionBased", !!formData.subscriptionBased);
     if (formData.bunnyCollectionId) form.append("bunnyCollectionId", formData.bunnyCollectionId);
     (formData.genreIds || []).forEach((id) => form.append("genreIds", id));
     if (formData.image) {
@@ -365,7 +375,9 @@ const SeriesList = () => {
         monthlyPrice: "",
         quarterlyPrice: "",
         genreIds: [],
-        freeEpisodesCount: "",
+        telegramFree: false,
+        telegramFreeUrl: "",
+        telegramFreeCount: "",
         bunnyCollectionId: "",
       });
       setImagePreview(null);
@@ -1038,22 +1050,43 @@ const SeriesList = () => {
                   </div>
                 </div>
 
-                {/* Bepul epizodlar soni */}
+                {/* Bepul qismlar: ilovada doim 1-qism bepul, qo'shimchalari Telegram kanalda */}
                 <div>
-                  <label htmlFor="series-free-episodes" className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                     <Gift className="w-4 h-4 text-yellow-400" />
-                    Nechta qism bepul <span className="text-gray-500 text-xs">(ixtiyoriy)</span>
+                    Bepul qismlar
                   </label>
-                  <input
-                    id="series-free-episodes"
-                    type="number"
-                    min="0"
-                    name="freeEpisodesCount"
-                    value={formData.freeEpisodesCount}
-                    onChange={handleInputChange}
-                    placeholder="Masalan: 5 (birinchi 5 ta epizod obunasiz ochiq)"
-                    className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
-                  />
+                  <p className="text-xs text-gray-500 mb-2">Ilovada har serialning 1-qismi avtomatik bepul bo'ladi.</p>
+                  <label className="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!formData.telegramFree}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, telegramFree: e.target.checked }))}
+                      className="w-4 h-4 accent-indigo-500"
+                    />
+                    Telegram'da bepul qismlar bor
+                  </label>
+                  {formData.telegramFree && (
+                    <div className="mt-3 space-y-3">
+                      <input
+                        type="url"
+                        name="telegramFreeUrl"
+                        value={formData.telegramFreeUrl}
+                        onChange={handleInputChange}
+                        placeholder="Telegram kanal havolasi, masalan: https://t.me/kanal_nomi"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                      />
+                      <input
+                        type="number"
+                        min="1"
+                        name="telegramFreeCount"
+                        value={formData.telegramFreeCount}
+                        onChange={handleInputChange}
+                        placeholder="Telegramdagi qismlar soni, masalan: 20"
+                        className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Bunny Collection ID */}
