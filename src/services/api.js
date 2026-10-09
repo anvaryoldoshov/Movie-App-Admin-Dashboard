@@ -687,3 +687,32 @@ export const deleteSubscriptionPlan = async (id) => {
 };
 export default api;
 
+export const getAdminComments = async ({ seriesId, page = 0, size = 30 } = {}) => {
+  try {
+    const params = { page, size };
+    if (seriesId) params.seriesId = seriesId;
+    const response = await api.get('/admin/comments', { params });
+    return response.data;
+  } catch (error) {
+    console.error('Get comments error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Izohlarni yuklashda xatolik';
+  }
+};
+
+export const setCommentHidden = async (id, hidden) => {
+  try {
+    await api.put(`/admin/comments/${id}/hidden`, null, { params: { value: hidden } });
+  } catch (error) {
+    console.error('Hide comment error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Izoh holatini o'zgartirib bo'lmadi";
+  }
+};
+
+export const deleteAdminComment = async (id) => {
+  try {
+    await api.delete(`/admin/comments/${id}`);
+  } catch (error) {
+    console.error('Delete comment error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Izohni o'chirib bo'lmadi";
+  }
+};

@@ -15,6 +15,7 @@ import Statistics from "./components/Statistics";
 import GenreManagement from "./components/GenreManagement";
 import SeasonManagement from "./components/SeasonManagement";
 import SubscriptionPlans from "./components/SubscriptionPlans";
+import CommentsModeration from "./components/CommentsModeration";
 
 function App() {
   return (
@@ -38,6 +39,7 @@ function App() {
             <ProtectedRoute path="/genres" component={GenreManagement} />
             <ProtectedRoute path="/seasons" component={SeasonManagement} />
             <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
+            <ProtectedRoute path="/comments" component={CommentsModeration} />
             <Redirect to="/login" />
           </Switch>
         </Route>

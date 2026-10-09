@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 // lucide-react ikonalaridan foydalanilgan
-import { Menu, X, MonitorPlay, Film, Users, LayoutList, Image, LogOut, Bell, BarChart3, Tags, Layers, CreditCard } from "lucide-react";
+import { Menu, X, MonitorPlay, Film, Users, LayoutList, Image, LogOut, Bell, BarChart3, Tags, Layers, CreditCard, MessageSquare } from "lucide-react";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +39,7 @@ const Sidebar = () => {
     { to: "/genres", icon: Tags, label: "Janrlar boshqaruvi", color: "text-orange-400" },
     { to: "/seasons", icon: Layers, label: "Fasllar boshqaruvi", color: "text-amber-400" },
     { to: "/subscription-plans", icon: CreditCard, label: "Obuna Tariflari", color: "text-teal-400" },
+    { to: "/comments", icon: MessageSquare, label: "Izohlar", color: "text-sky-400" },
     { to: "/send-notification", icon: Bell, label: "Notification yuborish", color: "text-pink-400" },
     { to: "/statistics", icon: BarChart3, label: "Statistika", color: "text-emerald-400" },
   ];
