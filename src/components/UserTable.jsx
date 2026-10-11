@@ -5,7 +5,8 @@ import {
   getAllUsersWithAccess,
   updateUser,
   updateUserAccess,
-  makeAdmin
+  makeAdmin,
+  getSubscriptionPlans
 } from "../services/api";
 import ConfirmDialog from "./ConfirmDialog";
 
@@ -24,6 +25,7 @@ const UsersTable = () => {
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, user: null });
   const [initialAccess, setInitialAccess] = useState(new Set());
   const [paymentInfo, setPaymentInfo] = useState({});
+  const [activePlan, setActivePlan] = useState(null);
 
 
   useEffect(() => {
@@ -43,6 +45,13 @@ const UsersTable = () => {
           accessMap[userId] = new Set(accessDataRaw[userId].map((s) => s.id));
         });
         setUserAccessMap(accessMap);
+
+        try {
+          const plans = await getSubscriptionPlans();
+          setActivePlan((Array.isArray(plans) ? plans : []).find(p => p.active) || null);
+        } catch (_) {
+          setActivePlan(null);
+        }
       } catch (e) {
         setError("Ma'lumotlarni olishda xatolik: " + e);
       }
@@ -92,13 +101,30 @@ const UsersTable = () => {
     const clean = amount.replace(/\D/g, '');
     setPaymentInfo(prev => ({
       ...prev,
-      [seriesId]: { type: getPayType(seriesId), ...prev[seriesId], amount: clean },
+      [seriesId]: { type: getPayType(seriesId), ...prev[seriesId], amount: clean, edited: true },
     }));
   };
 
+  // Muddat o'zgarsa summa yana avtomatik narxga qaytadi
+  const resetPayAmount = (seriesId) => {
+    setPaymentInfo(prev => (prev[seriesId]?.edited
+      ? { ...prev, [seriesId]: { ...prev[seriesId], amount: '', edited: false } }
+      : prev));
+  };
+
+  // Obunaga asoslangan serialda narx faol obuna tarifidan, aks holda serialning o'z narxidan olinadi (3 oy va undan ko'p — 3 oylik narx)
   const defaultPrice = (series, days) => {
-    if (days >= 90 && series.quarterlyPrice) return series.quarterlyPrice;
-    return series.monthlyPrice || 0;
+    const source = series.subscriptionBased ? activePlan : series;
+    if (!source) return 0;
+    if (days >= 90 && source.quarterlyPrice) return source.quarterlyPrice;
+    return source.monthlyPrice || 0;
+  };
+
+  const getPayAmount = (series) => {
+    const info = paymentInfo[series.id];
+    if (info?.edited) return info.amount || '';
+    const price = defaultPrice(series, seriesAccessDays[series.id] || 0);
+    return price ? String(price) : '';
   };
 
   const handleInputChange = (e) => {
@@ -109,6 +135,7 @@ const UsersTable = () => {
   // METOD: Alohida serial tugmalari uchun
   const handleIndividualSeriesDaysButton = (seriesId, days) => {
     const validDays = days;
+    resetPayAmount(seriesId);
     
     setSeriesAccessDays(prev => ({
       ...prev,
@@ -130,6 +157,7 @@ const UsersTable = () => {
   const handleIndividualSeriesDaysChange = (seriesId, days) => {
     const daysInt = parseInt(days, 10);
     const validDays = isNaN(daysInt) || daysInt < 0 ? 0 : daysInt;
+    resetPayAmount(seriesId);
     
     setSeriesAccessDays(prev => ({
       ...prev,
@@ -148,6 +176,7 @@ const UsersTable = () => {
   };
 
   const handleSeriesToggle = (seriesId) => {
+    resetPayAmount(seriesId);
     setSelectedSeries(prev => {
       const updated = new Set(prev);
       if (updated.has(seriesId)) {
@@ -186,7 +215,8 @@ const UsersTable = () => {
         if (days > 0) {
           seriesAccessMap[seriesId] = days;
           if (getPayType(seriesId) === 'paid') {
-            const amount = parseInt(paymentInfo[seriesId]?.amount, 10);
+            const series = seriesList.find(sr => sr.id === seriesId);
+            const amount = parseInt(series ? getPayAmount(series) : paymentInfo[seriesId]?.amount, 10);
             manualPayments[seriesId] = amount > 0 ? amount : null;
           }
         }
@@ -515,16 +545,16 @@ const UsersTable = () => {
                                         <input
                                           type="text"
                                           inputMode="numeric"
-                                          value={paymentInfo[s.id]?.amount || ''}
+                                          value={getPayAmount(s)}
                                           onChange={(e) => setPayAmount(s.id, e.target.value)}
-                                          placeholder={`${Number(defaultPrice(s, seriesAccessDays[s.id] || 0)).toLocaleString('ru-RU')} (narx)`}
+                                          placeholder="Summani kiriting"
                                           className="w-2/3 p-1.5 bg-[#0f111a] border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-right text-sm font-semibold text-green-300"
                                         />
                                       </div>
                                     )}
                                     {getPayType(s.id) === 'paid' && (
                                       <p className="text-[11px] text-gray-500">
-                                        Statistikaga "qo'lda to'lov" bo'lib tushadi. Bo'sh qoldirilsa serial narxi yoziladi.
+                                        Summa tanlangan muddatga qarab {s.subscriptionBased ? 'obuna tarifi' : 'serial'} narxidan avtomatik yoziladi, kerak bo'lsa o'zgartiring. Statistikaga "qo'lda to'lov" bo'lib tushadi.
                                       </p>
                                     )}
                                   </div>
