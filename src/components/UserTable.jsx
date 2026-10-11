@@ -112,12 +112,12 @@ const UsersTable = () => {
       : prev));
   };
 
-  // Obunaga asoslangan serialda narx faol obuna tarifidan, aks holda serialning o'z narxidan olinadi (3 oy va undan ko'p — 3 oylik narx)
+  // Obunaga asoslangan serialda narx faol obuna tarifidan, aks holda serialning o'z narxidan olinadi (3 oylik tarif bo'lsa 90+ kunga u, aks holda oylik narx × oylar soni)
   const defaultPrice = (series, days) => {
     const source = series.subscriptionBased ? activePlan : series;
     if (!source) return 0;
     if (days >= 90 && source.quarterlyPrice) return source.quarterlyPrice;
-    return source.monthlyPrice || 0;
+    return (source.monthlyPrice || 0) * Math.max(1, Math.ceil(days / 30));
   };
 
   const getPayAmount = (series) => {
