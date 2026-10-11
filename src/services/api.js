@@ -508,6 +508,16 @@ export const getSeriesStatistics = async () => {
   }
 };
 
+export const getSeriesMonthlyStatistics = async (seriesId) => {
+  try {
+    const response = await api.get(`/series/statistics/${seriesId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Get series monthly statistics error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Serial statistikasini yuklashda xatolik';
+  }
+};
+
 export const getAllUsersWithAccess = async () => {
     const { data } = await api.get("/api/access/all-with-series");
     return data;

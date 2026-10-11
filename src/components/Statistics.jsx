@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Loader2, AlertTriangle, Users, TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Loader2, AlertTriangle, Users, TrendingUp, ChevronRight } from 'lucide-react';
 import { getSeriesStatistics } from '../services/api';
 
 const getFullImageUrl = (imagePath) => {
@@ -53,7 +54,7 @@ const Statistics = () => {
             Statistika
           </h1>
           <p className="text-gray-400 text-center mt-2">
-            Har bir serial/film uchun hozirgi faol (to'lovli) obunachilar soni.
+            Har bir serial/film uchun hozirgi faol (to'lovli) obunachilar soni. Oylar bo'yicha batafsil ko'rish uchun serialni bosing.
           </p>
         </div>
 
@@ -87,7 +88,11 @@ const Statistics = () => {
           ) : (
             <div className="divide-y divide-gray-700/70">
               {stats.map((s, idx) => (
-                <div key={s.seriesId} className="flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition">
+                <Link
+                  key={s.seriesId}
+                  to={`/statistics/${s.seriesId}`}
+                  className="flex items-center gap-4 px-6 py-4 hover:bg-white/5 transition"
+                >
                   <span className="w-6 text-center text-sm font-semibold text-gray-500 shrink-0">{idx + 1}</span>
 
                   <div className="w-12 h-16 rounded-lg overflow-hidden bg-gray-900 shrink-0 border border-gray-700">
@@ -116,7 +121,8 @@ const Statistics = () => {
                     <span className="text-lg font-bold text-blue-400">{s.subscriberCount}</span>
                     <span className="block text-[11px] text-gray-500">obunachi</span>
                   </span>
-                </div>
+                  <ChevronRight className="w-4 h-4 text-gray-500 shrink-0" />
+                </Link>
               ))}
             </div>
           )}
