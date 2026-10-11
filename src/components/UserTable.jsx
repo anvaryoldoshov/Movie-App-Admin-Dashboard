@@ -120,6 +120,16 @@ const UsersTable = () => {
     return (source.monthlyPrice || 0) * Math.max(1, Math.ceil(days / 30));
   };
 
+  // Faqat serialda (yoki obuna tarifida) bor muddatlar ko'rsatiladi
+  const tariffOptions = (series) => {
+    const source = series.subscriptionBased ? activePlan : series;
+    const prefix = series.subscriptionBased ? 'Obuna ' : '';
+    const options = [];
+    if (source?.monthlyPrice) options.push({ days: 30, label: `${prefix}1 oy`, price: source.monthlyPrice });
+    if (source?.quarterlyPrice) options.push({ days: 90, label: `${prefix}3 oy`, price: source.quarterlyPrice });
+    return options.length ? options : [{ days: 30, label: '1 oy', price: 0 }];
+  };
+
   const getPayAmount = (series) => {
     const info = paymentInfo[series.id];
     if (info?.edited) return info.amount || '';
@@ -154,27 +164,6 @@ const UsersTable = () => {
     });
   };
 
-  const handleIndividualSeriesDaysChange = (seriesId, days) => {
-    const daysInt = parseInt(days, 10);
-    const validDays = isNaN(daysInt) || daysInt < 0 ? 0 : daysInt;
-    resetPayAmount(seriesId);
-    
-    setSeriesAccessDays(prev => ({
-      ...prev,
-      [seriesId]: validDays,
-    }));
-    
-    setSelectedSeries(prev => {
-        const updated = new Set(prev);
-        if (validDays > 0) {
-            updated.add(seriesId);
-        } else {
-            updated.delete(seriesId);
-        }
-        return updated;
-    });
-  };
-
   const handleSeriesToggle = (seriesId) => {
     resetPayAmount(seriesId);
     setSelectedSeries(prev => {
@@ -185,8 +174,9 @@ const UsersTable = () => {
       }
       else {
           updated.add(seriesId);
-          // Faqat checkbox tanlansa 30 kun beriladi
-          setSeriesAccessDays(d => ({...d, [seriesId]: 30})); 
+          const series = seriesList.find(sr => sr.id === seriesId);
+          const firstDays = series ? tariffOptions(series)[0].days : 30;
+          setSeriesAccessDays(d => ({...d, [seriesId]: firstDays}));
       }
       return updated;
     });
@@ -306,7 +296,7 @@ const UsersTable = () => {
         <button
             type="button"
             onClick={() => handleIndividualSeriesDaysButton(seriesId, days)}
-            className={`px-2 py-1 rounded-lg text-xs transition duration-200 w-1/3 min-w-[70px]
+            className={`px-3 py-1.5 rounded-lg text-xs transition duration-200 flex-1 min-w-[120px]
             ${currentDays === days && isSelected
               ? 'bg-purple-600 text-white shadow-lg border-purple-400' 
               : 'bg-[#0f111a] text-gray-400 hover:bg-[#2a2c3e] border border-gray-600'
@@ -494,24 +484,18 @@ const UsersTable = () => {
                         {(
                             <div className="flex flex-col space-y-2 pl-8">
                                 <div className="flex flex-wrap gap-2">
-                                    <IndividualAccessButton seriesId={s.id} days={7} label="1 hafta" />
-                                    <IndividualAccessButton seriesId={s.id} days={30} label="1 oy" />
-                                    <IndividualAccessButton seriesId={s.id} days={90} label="3 oy" />
+                                    {tariffOptions(s).map(t => (
+                                        <IndividualAccessButton
+                                            key={t.days}
+                                            seriesId={s.id}
+                                            days={t.days}
+                                            label={t.price ? `${t.label} · ${Number(t.price).toLocaleString('ru-RU')} so'm` : t.label}
+                                        />
+                                    ))}
                                 </div>
-                                
-                                <div className="flex items-center space-x-2 pt-1">
-                                    <label className="text-xs text-gray-400 whitespace-nowrap w-1/3">Boshqa Kun:</label>
-                                    <input
-                                        type="number"
-                                        value={seriesAccessDays[s.id] || 0}
-                                        onChange={(e) => handleIndividualSeriesDaysChange(s.id, e.target.value)}
-                                        min="0"
-                                        placeholder="0"
-                                        className={`w-2/3 p-1.5 bg-[#0f111a] border rounded-lg focus:outline-none focus:ring-2 text-right text-sm font-semibold 
-                                            ${(seriesAccessDays[s.id] || 0) > 0 ? 'border-purple-500 text-purple-300 focus:ring-purple-500' : 'border-gray-600 focus:ring-blue-500 text-white'}
-                                        `}
-                                    />
-                                </div>
+                                {tariffOptions(s).every(t => !t.price) && (
+                                    <p className="text-[11px] text-yellow-500/80">Bu serialda tarif narxi kiritilmagan.</p>
+                                )}
 
                                 {selectedSeries.has(s.id) && (seriesAccessDays[s.id] || 0) > 0 && (
                                   <div className="flex flex-col gap-2 pt-2 border-t border-gray-700/70">
