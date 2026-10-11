@@ -22,6 +22,8 @@ const UsersTable = () => {
   const [selectedSeries, setSelectedSeries] = useState(new Set());
   const [seriesAccessDays, setSeriesAccessDays] = useState({});
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, user: null });
+  const [initialAccess, setInitialAccess] = useState(new Set());
+  const [paymentInfo, setPaymentInfo] = useState({});
 
 
   useEffect(() => {
@@ -73,7 +75,30 @@ const UsersTable = () => {
     });
     setSeriesAccessDays(initialDays);
     setSelectedSeries(accessSet);
+    setInitialAccess(new Set(accessSet));
+    setPaymentInfo({});
     setModalSearchTerm("");
+  };
+
+  // Yangi berilayotgan serial standart "To'lov qildi", oldindan bor kirish esa "To'lovsiz" (qayta saqlashda yangi to'lov yozilmaydi)
+  const getPayType = (seriesId) =>
+    paymentInfo[seriesId]?.type || (initialAccess.has(seriesId) ? 'free' : 'paid');
+
+  const setPayType = (seriesId, type) => {
+    setPaymentInfo(prev => ({ ...prev, [seriesId]: { ...prev[seriesId], type } }));
+  };
+
+  const setPayAmount = (seriesId, amount) => {
+    const clean = amount.replace(/\D/g, '');
+    setPaymentInfo(prev => ({
+      ...prev,
+      [seriesId]: { type: getPayType(seriesId), ...prev[seriesId], amount: clean },
+    }));
+  };
+
+  const defaultPrice = (series, days) => {
+    if (days >= 90 && series.quarterlyPrice) return series.quarterlyPrice;
+    return series.monthlyPrice || 0;
   };
 
   const handleInputChange = (e) => {
@@ -155,14 +180,19 @@ const UsersTable = () => {
       ));
 
       const seriesAccessMap = {};
+      const manualPayments = {};
       Array.from(selectedSeries).forEach(seriesId => {
         const days = seriesAccessDays[seriesId] || 0;
         if (days > 0) {
           seriesAccessMap[seriesId] = days;
+          if (getPayType(seriesId) === 'paid') {
+            const amount = parseInt(paymentInfo[seriesId]?.amount, 10);
+            manualPayments[seriesId] = amount > 0 ? amount : null;
+          }
         }
       });
 
-      await updateUserAccess(updatedUser.id, { seriesAccessMap });
+      await updateUserAccess(updatedUser.id, { seriesAccessMap, manualPayments });
 
       setUserAccessMap(prev => ({
         ...prev,
@@ -173,6 +203,7 @@ const UsersTable = () => {
       setEditForm({ username: "", email: "" });
       setSelectedSeries(new Set());
       setSeriesAccessDays({});
+      setPaymentInfo({});
       setError("");
     } catch (err) {
       setError("Foydalanuvchini yangilashda xatolik: " + err);
@@ -185,6 +216,7 @@ const UsersTable = () => {
     setModalSearchTerm("");
     setSelectedSeries(new Set());
     setSeriesAccessDays({});
+    setPaymentInfo({});
     setError("");
   };
   
@@ -393,7 +425,7 @@ const UsersTable = () => {
                 />
                 
                 <p className="text-sm text-gray-400 italic bg-[#1c1e2c] p-3 rounded-lg border border-gray-700">
-                  Seriallarni tanlang va har biri uchun kirish kunini belgilang.
+                  Seriallarni tanlang va har biri uchun kirish kunini belgilang. Odam kartaga pul tashlagan bo'lsa "To'lov qildi"ni tanlab, summani kiriting — statistikaga tushadi.
                 </p>
 
                 {/* Serial qidirish inputi */}
@@ -450,6 +482,53 @@ const UsersTable = () => {
                                         `}
                                     />
                                 </div>
+
+                                {selectedSeries.has(s.id) && (seriesAccessDays[s.id] || 0) > 0 && (
+                                  <div className="flex flex-col gap-2 pt-2 border-t border-gray-700/70">
+                                    <div className="flex gap-2">
+                                      <button
+                                        type="button"
+                                        onClick={() => setPayType(s.id, 'paid')}
+                                        className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium border transition duration-200 ${
+                                          getPayType(s.id) === 'paid'
+                                            ? 'bg-green-600 text-white border-green-400'
+                                            : 'bg-[#0f111a] text-gray-400 border-gray-600 hover:bg-[#2a2c3e]'
+                                        }`}
+                                      >
+                                        💳 To'lov qildi
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => setPayType(s.id, 'free')}
+                                        className={`flex-1 px-2 py-1.5 rounded-lg text-xs font-medium border transition duration-200 ${
+                                          getPayType(s.id) === 'free'
+                                            ? 'bg-gray-500 text-white border-gray-300'
+                                            : 'bg-[#0f111a] text-gray-400 border-gray-600 hover:bg-[#2a2c3e]'
+                                        }`}
+                                      >
+                                        🎁 {initialAccess.has(s.id) ? "To'lovsiz" : 'Bepul / sovg\'a'}
+                                      </button>
+                                    </div>
+                                    {getPayType(s.id) === 'paid' && (
+                                      <div className="flex items-center space-x-2">
+                                        <label className="text-xs text-gray-400 whitespace-nowrap w-1/3">Summa (so'm):</label>
+                                        <input
+                                          type="text"
+                                          inputMode="numeric"
+                                          value={paymentInfo[s.id]?.amount || ''}
+                                          onChange={(e) => setPayAmount(s.id, e.target.value)}
+                                          placeholder={`${Number(defaultPrice(s, seriesAccessDays[s.id] || 0)).toLocaleString('ru-RU')} (narx)`}
+                                          className="w-2/3 p-1.5 bg-[#0f111a] border border-green-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-right text-sm font-semibold text-green-300"
+                                        />
+                                      </div>
+                                    )}
+                                    {getPayType(s.id) === 'paid' && (
+                                      <p className="text-[11px] text-gray-500">
+                                        Statistikaga "qo'lda to'lov" bo'lib tushadi. Bo'sh qoldirilsa serial narxi yoziladi.
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                             </div>
                         )}
                       </div>

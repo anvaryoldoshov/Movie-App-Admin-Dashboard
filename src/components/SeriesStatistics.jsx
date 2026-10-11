@@ -113,7 +113,7 @@ const SeriesStatistics = () => {
                 icon={Wallet}
                 color={{ bg: 'bg-green-600/20', text: 'text-green-400' }}
                 value={formatSum(stats.totalAmount)}
-                label="Jami summa"
+                label={stats.totalManualAmount > 0 ? `Jami summa (qo'lda: ${formatSum(stats.totalManualAmount)})` : 'Jami summa'}
               />
             </div>
 
@@ -150,8 +150,13 @@ const SeriesStatistics = () => {
                                 style={{ width: `${Math.max(4, (m.amount / maxAmount) * 100)}%` }}
                               />
                             </div>
+                            {m.manualPurchases > 0 && (
+                              <span className="block text-[11px] text-gray-400 mt-1 whitespace-nowrap">
+                                Pixy: {formatSum(m.amount - m.manualAmount)} · Qo'lda ({m.manualPurchases}): {formatSum(m.manualAmount)}
+                              </span>
+                            )}
                             <span className="block text-[11px] text-gray-500 mt-1 whitespace-nowrap">
-                              komissiya bilan: {formatSum(m.paidAmount)}
+                              foydalanuvchilar to'lagan: {formatSum(m.paidAmount)}
                             </span>
                           </td>
                         </tr>
@@ -164,7 +169,8 @@ const SeriesStatistics = () => {
 
             <p className="text-xs text-gray-500 mt-4">
               Summa har bir xarid qilingan paytdagi narx bo'yicha hisoblanadi (narx keyin o'zgarsa, eski xaridlar o'zgarmaydi).
-              "Komissiya bilan" — foydalanuvchi to'lagan summa (narx + 4%).
+              "Foydalanuvchilar to'lagan" — Pixy orqali narx + 4% komissiya, qo'lda to'lovlar esa admin kiritgan summa.
+              "Qo'lda" — admin paneldan "To'lov qildi" deb yoqilgan obunalar (masalan, kartaga o'tkazma).
             </p>
           </>
         )}
