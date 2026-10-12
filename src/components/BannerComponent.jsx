@@ -4,9 +4,11 @@ import {
   getSeries,
   addBanner,
   updateBanner,
-  deleteBanner
+  deleteBanner,
+  reorderBanners
 } from '../services/api';
 import ConfirmDialog from './ConfirmDialog';
+import { GripVertical, ArrowUp, ArrowDown } from 'lucide-react';
 
 // ***************************************************************
 // BASE_URL server manzilini to'g'irlashni unutmang!
@@ -38,6 +40,8 @@ const BannerComponent = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, bannerId: null, seriesId: null, unlinked: false });
+  const [draggedId, setDraggedId] = useState(null);
+  const [dragOverId, setDragOverId] = useState(null);
 
   useEffect(() => {
     fetchBanners();
@@ -149,6 +153,74 @@ const BannerComponent = () => {
       console.error('Error deleting banner:', error);
       setError(error?.message || "Bannerni o'chirishda xatolik.");
     }
+  };
+
+  // Bannerlarni qo'lda tortib (drag & drop) yoki tugmalar bilan tartibini o'zgartirish
+  const handleDragStart = (e, id) => {
+    setDraggedId(id);
+    e.dataTransfer.effectAllowed = 'move';
+    try {
+      e.dataTransfer.setData('text/plain', String(id));
+    } catch (err) {
+      // ba'zi brauzerlarda setData shart emas
+    }
+  };
+
+  const handleDragOver = (e, id) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    if (draggedId !== null && id !== draggedId) {
+      setDragOverId(id);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDraggedId(null);
+    setDragOverId(null);
+  };
+
+  // Yangi tartibni ekranda darhol ko'rsatib, keyin backendga saqlaydi; xatolik bo'lsa eski holatga qaytaradi
+  const persistReorder = async (reordered, previousOrder) => {
+    setBanners(reordered);
+    try {
+      await reorderBanners(reordered.map((b) => b.id));
+      setError(null);
+    } catch (err) {
+      setBanners(previousOrder);
+      setError(typeof err === 'string' ? err : "Tartibni saqlab bo'lmadi.");
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleDrop = (e, targetId) => {
+    e.preventDefault();
+    const sourceId = draggedId;
+    setDraggedId(null);
+    setDragOverId(null);
+
+    if (!sourceId || sourceId === targetId) return;
+
+    const sourceIndex = banners.findIndex((b) => b.id === sourceId);
+    const targetIndex = banners.findIndex((b) => b.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const reordered = [...banners];
+    const [moved] = reordered.splice(sourceIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    persistReorder(reordered, banners);
+  };
+
+  const handleMoveBanner = (bannerId, direction) => {
+    const index = banners.findIndex((b) => b.id === bannerId);
+    const targetIndex = index + direction;
+    if (index === -1 || targetIndex < 0 || targetIndex >= banners.length) return;
+
+    const reordered = [...banners];
+    const [moved] = reordered.splice(index, 1);
+    reordered.splice(targetIndex, 0, moved);
+
+    persistReorder(reordered, banners);
   };
 
   const resetForm = () => {
@@ -281,10 +353,16 @@ const BannerComponent = () => {
             <p className="text-gray-500 text-center py-8">Hozircha hech qanday banner mavjud emas.</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {banners.map((banner) => (
+              {banners.map((banner, index) => (
                 <div
                   key={banner.id}
-                  className="bg-[#0f111a] rounded-xl overflow-hidden shadow-xl border border-gray-700 transition duration-300 hover:scale-[1.02]"
+                  onDragOver={(e) => handleDragOver(e, banner.id)}
+                  onDrop={(e) => handleDrop(e, banner.id)}
+                  className={`bg-[#0f111a] rounded-xl overflow-hidden shadow-xl border transition duration-300 hover:scale-[1.02] ${
+                    draggedId === banner.id ? 'opacity-40' : ''
+                  } ${
+                    dragOverId === banner.id ? 'border-indigo-500 ring-2 ring-indigo-500/60' : 'border-gray-700'
+                  }`}
                 >
                   {/* Banner rasmi */}
                   <div className='w-full h-40 overflow-hidden bg-gray-900'>
@@ -297,13 +375,39 @@ const BannerComponent = () => {
                   
                   {/* Ma'lumot va tugmalar */}
                   <div className='p-4'>
-                    <p className="text-sm text-gray-300 font-medium mb-3">
+                    <p className="flex items-center gap-2 text-sm text-gray-300 font-medium mb-3">
+                        <span
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, banner.id)}
+                          onDragEnd={handleDragEnd}
+                          className="cursor-grab active:cursor-grabbing text-gray-500 hover:text-gray-300 flex-shrink-0"
+                          title="Ushlab tortib o'rnini almashtirish"
+                        >
+                          <GripVertical className="w-4 h-4" />
+                        </span>
+                        <span className="text-gray-500">#{index + 1}</span>
                         Serial: <span className='text-blue-400 font-semibold'>
                             {/* ✨ TUZATISH: banner.seriesTitle (yoki seriesId) ishlatilmoqda */}
                             {banner.seriesTitle || (banner.seriesId ? `ID: ${banner.seriesId}` : 'Serial ma\'lumoti yo\'q')}
                         </span>
                     </p>
                     <div className="flex justify-between gap-3">
+                      <button
+                        onClick={() => handleMoveBanner(banner.id, -1)}
+                        disabled={index === 0}
+                        className="p-2 bg-gray-700 text-white rounded-lg text-sm transition hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center"
+                        title="Bir pog'ona oldinga"
+                      >
+                        <ArrowUp className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleMoveBanner(banner.id, 1)}
+                        disabled={index === banners.length - 1}
+                        className="p-2 bg-gray-700 text-white rounded-lg text-sm transition hover:bg-gray-600 disabled:opacity-30 disabled:cursor-not-allowed flex items-center"
+                        title="Bir pog'ona keyinga"
+                      >
+                        <ArrowDown className="w-4 h-4" />
+                      </button>
                       <button
                         onClick={() => handleEdit(banner)}
                         className="flex-1 px-3 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-medium"

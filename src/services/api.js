@@ -235,6 +235,16 @@ export const updateBanner = async (bannerId, imageFile, oldImageUrl, seriesId) =
   return response.data;
 };
 
+export const reorderBanners = async (orderedIds) => {
+  try {
+    const response = await api.put('/banners/reorder', orderedIds);
+    return response.data;
+  } catch (error) {
+    console.error('Reorder banners error:', error.response?.data || error.message);
+    throw error.response?.data?.message || "Bannerlar tartibini o'zgartirib bo'lmadi";
+  }
+};
+
 export const deleteBanner = async (id, seriesId) => {
   try {
     const response = await api.delete(`/banners/${id}/${seriesId}`);
