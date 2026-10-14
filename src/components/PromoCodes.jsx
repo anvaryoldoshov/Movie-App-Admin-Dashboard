@@ -5,6 +5,7 @@ import {
   updatePromoCode,
   deletePromoCode,
   getPromoCodeUsages,
+  getAllSeries,
 } from "../services/api";
 import {
   Plus,
@@ -19,6 +20,8 @@ import {
   Users,
   Copy,
   X,
+  Film,
+  Search,
 } from "lucide-react";
 
 const emptyForm = {
@@ -28,6 +31,8 @@ const emptyForm = {
   maxUses: "",
   validUntil: "",
   active: true,
+  allSeries: true,
+  seriesIds: [],
 };
 
 const som = (v) => Number(v || 0).toLocaleString("ru-RU") + " so'm";
@@ -81,6 +86,8 @@ const PromoCodes = () => {
   const [usagesFor, setUsagesFor] = useState(null);
   const [usages, setUsages] = useState([]);
   const [usagesLoading, setUsagesLoading] = useState(false);
+  const [seriesList, setSeriesList] = useState([]);
+  const [seriesSearch, setSeriesSearch] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -95,11 +102,27 @@ const PromoCodes = () => {
 
   useEffect(() => {
     load();
+    getAllSeries()
+      .then((data) => setSeriesList(Array.isArray(data) ? data : []))
+      .catch(() => setSeriesList([]));
   }, []);
+
+  const toggleSeries = (id) =>
+    setFormData((prev) => ({
+      ...prev,
+      seriesIds: prev.seriesIds.includes(id)
+        ? prev.seriesIds.filter((x) => x !== id)
+        : [...prev.seriesIds, id],
+    }));
+
+  const visibleSeries = seriesList.filter((sr) =>
+    (sr.title || "").toLowerCase().includes(seriesSearch.trim().toLowerCase())
+  );
 
   const openCreate = () => {
     setEditing(null);
     setFormData(emptyForm);
+    setSeriesSearch("");
     setShowForm(true);
     setMessage(null);
   };
@@ -113,7 +136,10 @@ const PromoCodes = () => {
       maxUses: p.maxUses ? String(p.maxUses) : "",
       validUntil: p.validUntil || "",
       active: p.active,
+      allSeries: p.allSeries,
+      seriesIds: (p.series || []).map((sr) => sr.id),
     });
+    setSeriesSearch("");
     setShowForm(true);
     setMessage(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -138,6 +164,7 @@ const PromoCodes = () => {
     const value = Number(formData.discountValue);
     if (!value) return "Chegirma qiymatini kiriting.";
     if (formData.discountType === "PERCENT" && value > 100) return "Foiz 100 dan oshmasin.";
+    if (!formData.allSeries && formData.seriesIds.length === 0) return "Kamida bitta serial tanlang yoki \"Barcha seriallar\"ni belgilang.";
     return null;
   };
 
@@ -157,6 +184,7 @@ const PromoCodes = () => {
       maxUses: formData.maxUses ? Number(formData.maxUses) : null,
       validUntil: formData.validUntil || null,
       active: formData.active,
+      seriesIds: formData.allSeries ? [] : formData.seriesIds,
     };
     try {
       if (editing) {
@@ -184,6 +212,7 @@ const PromoCodes = () => {
         maxUses: p.maxUses,
         validUntil: p.validUntil,
         active: !p.active,
+        seriesIds: (p.series || []).map((sr) => sr.id),
       });
       setPromos((prev) => prev.map((x) => (x.id === p.id ? { ...x, active: !p.active } : x)));
     } catch (error) {
@@ -376,6 +405,71 @@ const PromoCodes = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                  Qaysi seriallarga amal qiladi <span className="text-red-500">*</span>
+                </label>
+                <div className="flex rounded-lg overflow-hidden border border-gray-600 w-fit mb-2">
+                  {[
+                    { v: true, l: "Barcha seriallar" },
+                    { v: false, l: "Tanlangan seriallar" },
+                  ].map((o) => (
+                    <button
+                      key={String(o.v)}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, allSeries: o.v }))}
+                      className={`px-4 py-2 text-sm font-medium transition ${
+                        formData.allSeries === o.v
+                          ? "bg-fuchsia-600 text-white"
+                          : "bg-[#0f111a] text-gray-400 hover:bg-[#2a2c3e]"
+                      }`}
+                    >
+                      {o.l}
+                    </button>
+                  ))}
+                </div>
+                {formData.allSeries ? (
+                  <p className="text-xs text-gray-500">Har qanday serial xaridiga va obunaga qo'llanadi.</p>
+                ) : (
+                  <div className="border border-gray-600 rounded-lg bg-[#0f111a]">
+                    <div className="flex items-center gap-2 px-3 border-b border-gray-700">
+                      <Search className="w-4 h-4 text-gray-500" />
+                      <input
+                        type="text"
+                        value={seriesSearch}
+                        onChange={(e) => setSeriesSearch(e.target.value)}
+                        placeholder="Serial qidirish..."
+                        className="w-full py-2.5 bg-transparent text-sm text-white placeholder-gray-500 focus:outline-none"
+                      />
+                      <span className="text-xs text-fuchsia-300 whitespace-nowrap">{formData.seriesIds.length} ta tanlandi</span>
+                    </div>
+                    <div className="max-h-56 overflow-y-auto p-1">
+                      {visibleSeries.length === 0 ? (
+                        <p className="text-center text-gray-500 text-sm py-4">Serial topilmadi</p>
+                      ) : (
+                        visibleSeries.map((sr) => (
+                          <label
+                            key={sr.id}
+                            className="flex items-center gap-3 px-2 py-2 rounded-md hover:bg-[#2a2c3e] cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.seriesIds.includes(sr.id)}
+                              onChange={() => toggleSeries(sr.id)}
+                              className="h-4 w-4 accent-fuchsia-600"
+                            />
+                            <span className="text-sm text-white">{sr.title}</span>
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+                {!formData.allSeries && (
+                  <p className="text-xs text-gray-500 mt-1">Obuna xaridiga faqat "Barcha seriallar" promokodi qo'llanadi.</p>
+                )}
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer select-none">
                 <input
                   type="checkbox"
@@ -456,6 +550,28 @@ const PromoCodes = () => {
                         −{discountLabel(p)}
                       </span>
                       <span className={`px-2 py-0.5 rounded-full text-xs border ${badge.cls}`}>{badge.text}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 mb-2">
+                      <Film className="w-3.5 h-3.5 text-gray-500" />
+                      {p.allSeries ? (
+                        <span className="text-xs text-gray-300">Barcha seriallar va obuna</span>
+                      ) : (
+                        <>
+                          {(p.series || []).slice(0, 4).map((sr) => (
+                            <span key={sr.id} className="px-2 py-0.5 text-xs rounded-full bg-blue-600/30 text-blue-100">
+                              {sr.title}
+                            </span>
+                          ))}
+                          {(p.series || []).length > 4 && (
+                            <span
+                              className="px-2 py-0.5 text-xs rounded-full bg-blue-600/20 text-blue-200"
+                              title={p.series.slice(4).map((sr) => sr.title).join(", ")}
+                            >
+                              +{p.series.length - 4}
+                            </span>
+                          )}
+                        </>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm">
                       <span className="text-gray-400">
