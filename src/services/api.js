@@ -736,3 +736,53 @@ export const deleteAdminComment = async (id) => {
     throw error.response?.data?.message || "Izohni o'chirib bo'lmadi";
   }
 };
+
+// ─── PROMO CODE FUNCTIONS ─────────────────────────────────────────────────────
+const promoError = (error, fallback) => {
+  console.error(fallback, error.response?.data || error.message);
+  return error.response?.data?.message || fallback;
+};
+
+export const getPromoCodes = async () => {
+  try {
+    const response = await api.get('/admin/promo-codes');
+    return response.data;
+  } catch (error) {
+    throw promoError(error, 'Promokodlarni yuklashda xatolik');
+  }
+};
+
+export const createPromoCode = async (data) => {
+  try {
+    const response = await api.post('/admin/promo-codes', data);
+    return response.data;
+  } catch (error) {
+    throw promoError(error, 'Promokod yaratishda xatolik');
+  }
+};
+
+export const updatePromoCode = async (id, data) => {
+  try {
+    const response = await api.put(`/admin/promo-codes/${id}`, data);
+    return response.data;
+  } catch (error) {
+    throw promoError(error, 'Promokodni yangilashda xatolik');
+  }
+};
+
+export const deletePromoCode = async (id) => {
+  try {
+    await api.delete(`/admin/promo-codes/${id}`);
+  } catch (error) {
+    throw promoError(error, "Promokodni o'chirishda xatolik");
+  }
+};
+
+export const getPromoCodeUsages = async (id) => {
+  try {
+    const response = await api.get(`/admin/promo-codes/${id}/usages`);
+    return response.data;
+  } catch (error) {
+    throw promoError(error, 'Foydalanishlar ro\'yxatini yuklashda xatolik');
+  }
+};
