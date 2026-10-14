@@ -26,6 +26,16 @@ const UsersTable = () => {
   const [initialAccess, setInitialAccess] = useState(new Set());
   const [paymentInfo, setPaymentInfo] = useState({});
   const [activePlan, setActivePlan] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const matchesUser = (user, rawTerm) => {
+    const term = rawTerm.trim().toLowerCase();
+    if (!term) return true;
+    return String(user.id) === term ||
+      String(user.userId ?? '').toLowerCase() === term ||
+      (user.username || '').toLowerCase().includes(term) ||
+      (user.email || '').toLowerCase().includes(term);
+  };
 
 
   useEffect(() => {
@@ -60,23 +70,18 @@ const UsersTable = () => {
   }, []);
 
   const handleSearch = (e) => {
-    const term = e.target.value.toLowerCase();
+    const term = e.target.value;
     setSearchTerm(term);
-    const filtered = users.filter(
-      (user) =>
-        String(user.id) === term.trim() ||
-        user.username.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
-    );
-    setFilteredUsers(filtered);
+    setFilteredUsers(users.filter((user) => matchesUser(user, term)));
   };
 
   const handleEditClick = (user) => {
     setEditingUser(user);
     setEditForm({
-      username: user.username,
-      email: user.email,
+      username: user.username || "",
+      email: user.email || "",
     });
+    setError("");
 
     const accessSet = userAccessMap[user.id] || new Set();
     const initialDays = {};
@@ -185,19 +190,21 @@ const UsersTable = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!editForm.username || !editForm.email) {
-      setError("Username va email kiritilishi shart.");
+    if (saving) return;
+    if (!editForm.email.trim()) {
+      setError("Email kiritilishi shart.");
       return;
     }
 
+    setSaving(true);
     try {
-      const updatedUser = await updateUser(editingUser.id, editForm);
+      const updatedUser = await updateUser(editingUser.id, {
+        username: editForm.username.trim() || null,
+        email: editForm.email.trim(),
+      });
       const updatedUsers = users.map(u => u.id === updatedUser.id ? updatedUser : u);
       setUsers(updatedUsers);
-      setFilteredUsers(updatedUsers.filter(u =>
-        u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase())
-      ));
+      setFilteredUsers(updatedUsers.filter(u => matchesUser(u, searchTerm)));
 
       const seriesAccessMap = {};
       const manualPayments = {};
@@ -227,7 +234,9 @@ const UsersTable = () => {
       setPaymentInfo({});
       setError("");
     } catch (err) {
-      setError("Foydalanuvchini yangilashda xatolik: " + err);
+      setError("Foydalanuvchini yangilashda xatolik: " + (err?.response?.data?.message || err?.message || err));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -329,7 +338,7 @@ const UsersTable = () => {
         {/* Qidiruv */}
         <input
           type="text"
-          placeholder="Username yoki email bo‘yicha qidirish..."
+          placeholder="ID, username yoki email bo‘yicha qidirish..."
           value={searchTerm}
           onChange={handleSearch}
           className="w-full p-3 bg-[#1c1e2c] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 mb-6 shadow-xl"
@@ -355,7 +364,7 @@ const UsersTable = () => {
                   onClick={() => handleEditClick(user)}
                 >
                   <td className="p-3 text-xs sm:text-sm text-gray-400">{user.id}</td>
-                  <td className="p-3 text-xs sm:text-sm font-medium">{user.username}</td>
+                  <td className="p-3 text-xs sm:text-sm font-medium">{user.username || <span className="text-gray-500 italic">Ismsiz</span>}</td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell text-gray-300">{user.email}</td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell">
                     {user.role === "ADMIN"
@@ -427,7 +436,8 @@ const UsersTable = () => {
           <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 sm:p-8 overflow-y-auto">
             <div className="w-full max-w-lg bg-[#1c1e2c] p-6 rounded-xl shadow-2xl text-white my-8 border border-gray-700">
               <h2 className="text-2xl font-bold mb-5 text-center tracking-tight text-blue-400">Foydalanuvchini Tahrirlash</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
+              {error && <p className="text-red-400 bg-red-500/10 p-3 rounded-lg mb-4 text-center text-sm border border-red-400">{error}</p>}
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 <input
                   type="text"
                   name="username"
@@ -553,7 +563,7 @@ const UsersTable = () => {
 
                 <div className="flex justify-end space-x-3 pt-5">
                   <button type="button" onClick={handleCloseModal} className="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition duration-200 shadow-lg font-medium">Bekor qilish</button>
-                  <button type="submit" className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition duration-200 shadow-lg font-semibold">Saqlash</button>
+                  <button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 disabled:cursor-wait px-4 py-2 rounded-lg transition duration-200 shadow-lg font-semibold">{saving ? "Saqlanmoqda..." : "Saqlash"}</button>
                 </div>
               </form>
             </div>
