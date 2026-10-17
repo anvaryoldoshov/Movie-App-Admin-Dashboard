@@ -86,7 +86,7 @@ const UsersTable = () => {
     const accessSet = userAccessMap[user.id] || new Set();
     const initialDays = {};
     seriesList.forEach(s => {
-      initialDays[s.id] = accessSet.has(s.id) ? 30 : 0;
+      initialDays[s.id] = 0;
     });
     setSeriesAccessDays(initialDays);
     setSelectedSeries(accessSet);
@@ -210,7 +210,10 @@ const UsersTable = () => {
       const manualPayments = {};
       Array.from(selectedSeries).forEach(seriesId => {
         const days = seriesAccessDays[seriesId] || 0;
-        if (days > 0) {
+        // 0 kun — bor kirishning muddati o'zgarmaydi (backend uni o'chirmaydi ham, yangilamaydi ham)
+        if (days <= 0 && initialAccess.has(seriesId)) {
+          seriesAccessMap[seriesId] = 0;
+        } else if (days > 0) {
           seriesAccessMap[seriesId] = days;
           if (getPayType(seriesId) === 'paid') {
             const series = seriesList.find(sr => sr.id === seriesId);
@@ -254,7 +257,8 @@ const UsersTable = () => {
     if (e && e.stopPropagation) e.stopPropagation();
     try {
       const seriesAccessMap = {};
-      seriesList.forEach(s => { seriesAccessMap[s.id] = 30; });
+      const existing = userAccessMap[user.id] || new Set();
+      seriesList.forEach(s => { seriesAccessMap[s.id] = existing.has(s.id) ? 0 : 30; });
       await updateUserAccess(user.id, { seriesAccessMap });
       setUserAccessMap(prev => ({ ...prev, [user.id]: new Set(seriesList.map(s => s.id)) }));
       setError("");
@@ -504,6 +508,9 @@ const UsersTable = () => {
                                         />
                                     ))}
                                 </div>
+                                {selectedSeries.has(s.id) && initialAccess.has(s.id) && !(seriesAccessDays[s.id] > 0) && (
+                                    <p className="text-[11px] text-green-400/80">✓ Joriy muddat o'zgarmaydi. Uzaytirish uchun muddatni tanlang.</p>
+                                )}
                                 {tariffOptions(s).every(t => !t.price) && (
                                     <p className="text-[11px] text-yellow-500/80">Bu serialda tarif narxi kiritilmagan.</p>
                                 )}
