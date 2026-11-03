@@ -518,6 +518,16 @@ export const getSeriesStatistics = async () => {
   }
 };
 
+export const getSalesSummary = async () => {
+  try {
+    const response = await api.get('/series/statistics/summary');
+    return response.data;
+  } catch (error) {
+    console.error('Get sales summary error:', error.response?.data || error.message);
+    throw error.response?.data?.message || 'Sotuvlar statistikasini yuklashda xatolik';
+  }
+};
+
 export const getSeriesMonthlyStatistics = async (seriesId) => {
   try {
     const response = await api.get(`/series/statistics/${seriesId}`);

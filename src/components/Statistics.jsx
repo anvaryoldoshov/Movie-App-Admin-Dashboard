@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, AlertTriangle, Users, TrendingUp, ChevronRight } from 'lucide-react';
-import { getSeriesStatistics } from '../services/api';
+import { getSeriesStatistics, getSalesSummary } from '../services/api';
 
 const getFullImageUrl = (imagePath) => {
   if (!imagePath) return '';
@@ -10,8 +10,19 @@ const getFullImageUrl = (imagePath) => {
   return `${BASE_URL}${imagePath}`;
 };
 
+const formatNumber = (value) => Number(value || 0).toLocaleString('ru-RU');
+
+const SalesCard = ({ label, count, amount }) => (
+  <div className="bg-[#1c1e2c] p-6 rounded-xl shadow-2xl border border-gray-700">
+    <p className="text-sm text-gray-400">{label}</p>
+    <p className="text-3xl font-bold text-white mt-3">{formatNumber(count)} ta</p>
+    <p className="text-lg text-green-400 mt-2">{formatNumber(amount)} so'm</p>
+  </div>
+);
+
 const Statistics = () => {
   const [stats, setStats] = useState([]);
+  const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -19,8 +30,9 @@ const Statistics = () => {
     const fetchStats = async () => {
       try {
         setIsLoading(true);
-        const data = await getSeriesStatistics();
+        const [data, sales] = await Promise.all([getSeriesStatistics(), getSalesSummary()]);
         setStats(Array.isArray(data) ? data : []);
+        setSummary(sales);
         setError(null);
       } catch (err) {
         setError(typeof err === 'string' ? err : 'Statistikani yuklab bo\'lmadi.');
@@ -62,6 +74,14 @@ const Statistics = () => {
           <div className="flex items-center bg-red-900/40 text-red-300 p-4 rounded-xl mb-6 shadow-xl border border-red-700/50">
             <AlertTriangle className="w-5 h-5 mr-3 flex-shrink-0" />
             <span className="font-medium">Xatolik:</span>&nbsp;{error}
+          </div>
+        )}
+
+        {/* Sotuvlar */}
+        {summary && (
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <SalesCard label="Jami sotuv" count={summary.totalPurchases} amount={summary.totalAmount} />
+            <SalesCard label="Shu oy" count={summary.monthPurchases} amount={summary.monthAmount} />
           </div>
         )}
 
