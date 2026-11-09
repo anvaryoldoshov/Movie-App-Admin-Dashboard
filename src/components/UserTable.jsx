@@ -33,9 +33,13 @@ const UsersTable = () => {
     if (!term) return true;
     return String(user.id) === term ||
       String(user.userId ?? '').toLowerCase() === term ||
+      String(user.telegramChatId ?? '') === term ||
+      (user.telegramUsername || '').toLowerCase().includes(term.replace(/^@/, '')) ||
       (user.username || '').toLowerCase().includes(term) ||
       (user.email || '').toLowerCase().includes(term);
   };
+
+  const isTelegramEmail = (email) => (email || '').endsWith('@telegram.tarixiykinolar.uz');
 
 
   useEffect(() => {
@@ -342,7 +346,7 @@ const UsersTable = () => {
         {/* Qidiruv */}
         <input
           type="text"
-          placeholder="ID, username yoki email bo‘yicha qidirish..."
+          placeholder="ID, username, email yoki Telegram ID bo‘yicha qidirish..."
           value={searchTerm}
           onChange={handleSearch}
           className="w-full p-3 bg-[#1c1e2c] border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 mb-6 shadow-xl"
@@ -356,6 +360,7 @@ const UsersTable = () => {
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">ID</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Username</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Email</th>
+                <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Telegram</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300 hidden md:table-cell">Role</th>
                 <th className="p-3 text-xs sm:text-sm font-medium text-gray-300">Boshqaruv & Access</th>
               </tr>
@@ -369,7 +374,21 @@ const UsersTable = () => {
                 >
                   <td className="p-3 text-xs sm:text-sm text-gray-400">{user.id}</td>
                   <td className="p-3 text-xs sm:text-sm font-medium">{user.username || <span className="text-gray-500 italic">Ismsiz</span>}</td>
-                  <td className="p-3 text-xs sm:text-sm hidden md:table-cell text-gray-300">{user.email}</td>
+                  <td className="p-3 text-xs sm:text-sm hidden md:table-cell text-gray-300">
+                    {isTelegramEmail(user.email) ? <span className="text-gray-500 italic">—</span> : user.email}
+                  </td>
+                  <td className="p-3 text-xs sm:text-sm text-gray-300">
+                    {user.telegramChatId ? (
+                      <div className="flex flex-col">
+                        <span className="font-mono">{user.telegramChatId}</span>
+                        {user.telegramUsername && (
+                          <span className="text-sky-400 text-xs">@{user.telegramUsername}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 italic">—</span>
+                    )}
+                  </td>
                   <td className="p-3 text-xs sm:text-sm hidden md:table-cell">
                     {user.role === "ADMIN"
                       ? <span className="px-2 py-0.5 rounded-full bg-yellow-500/20 text-yellow-400 text-xs font-semibold">Admin</span>
@@ -441,6 +460,15 @@ const UsersTable = () => {
             <div className="w-full max-w-lg bg-[#1c1e2c] p-6 rounded-xl shadow-2xl text-white my-8 border border-gray-700">
               <h2 className="text-2xl font-bold mb-5 text-center tracking-tight text-blue-400">Foydalanuvchini Tahrirlash</h2>
               {error && <p className="text-red-400 bg-red-500/10 p-3 rounded-lg mb-4 text-center text-sm border border-red-400">{error}</p>}
+              {editingUser.telegramChatId && (
+                <div className="mb-4 p-3 rounded-lg bg-sky-500/10 border border-sky-500/40 text-sm flex items-center justify-between gap-2">
+                  <span className="text-gray-300">Telegram ID</span>
+                  <span className="font-mono text-sky-300">
+                    {editingUser.telegramChatId}
+                    {editingUser.telegramUsername && <span className="ml-2 text-sky-400">@{editingUser.telegramUsername}</span>}
+                  </span>
+                </div>
+              )}
               <form onSubmit={handleSubmit} noValidate className="space-y-4">
                 <input
                   type="text"

@@ -796,3 +796,41 @@ export const getPromoCodeUsages = async (id) => {
     throw promoError(error, 'Foydalanishlar ro\'yxatini yuklashda xatolik');
   }
 };
+
+// ─── TELEGRAM BOT INTEGRATION ─────────────────────────────────────────────────
+export const getBotSeriesMappings = async () => {
+  try {
+    const response = await api.get('/admin/telegram-bot/series-mappings');
+    return response.data;
+  } catch (error) {
+    throw promoError(error, "Bot seriallarini yuklashda xatolik");
+  }
+};
+
+export const saveBotSeriesMapping = async (botSeriesId, data) => {
+  try {
+    const response = await api.put(`/admin/telegram-bot/series-mappings/${botSeriesId}`, data);
+    return response.data;
+  } catch (error) {
+    throw promoError(error, "Bog'lanishni saqlashda xatolik");
+  }
+};
+
+export const deleteBotSeriesMapping = async (botSeriesId) => {
+  try {
+    await api.delete(`/admin/telegram-bot/series-mappings/${botSeriesId}`);
+  } catch (error) {
+    throw promoError(error, "Bog'lanishni o'chirishda xatolik");
+  }
+};
+
+export const getBotPurchases = async (status) => {
+  try {
+    const response = await api.get('/admin/telegram-bot/purchases', {
+      params: status ? { status } : {},
+    });
+    return response.data;
+  } catch (error) {
+    throw promoError(error, "Bot xaridlarini yuklashda xatolik");
+  }
+};

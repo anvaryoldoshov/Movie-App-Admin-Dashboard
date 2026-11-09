@@ -18,6 +18,7 @@ import SeasonManagement from "./components/SeasonManagement";
 import SubscriptionPlans from "./components/SubscriptionPlans";
 import CommentsModeration from "./components/CommentsModeration";
 import PromoCodes from "./components/PromoCodes";
+import TelegramBot from "./components/TelegramBot";
 
 function App() {
   return (
@@ -44,6 +45,7 @@ function App() {
             <ProtectedRoute path="/subscription-plans" component={SubscriptionPlans} />
             <ProtectedRoute path="/comments" component={CommentsModeration} />
             <ProtectedRoute path="/promo-codes" component={PromoCodes} />
+            <ProtectedRoute path="/telegram-bot" component={TelegramBot} />
             <Redirect to="/login" />
           </Switch>
         </Route>
