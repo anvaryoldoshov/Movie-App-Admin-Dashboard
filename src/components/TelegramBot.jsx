@@ -200,6 +200,9 @@ const TelegramBot = () => {
                             </option>
                           ))}
                         </select>
+                        {m.autoMatched && !changed && (
+                          <div className="mt-1 text-[11px] text-sky-400/80">⚡ Nom bo'yicha avtomatik bog'landi — tekshirib qo'ying</div>
+                        )}
                       </td>
                       <td className="p-2">
                         {m.pendingCount > 0 ? (
