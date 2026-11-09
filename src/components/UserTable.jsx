@@ -174,6 +174,55 @@ const UsersTable = () => {
     });
   };
 
+  const MAX_CUSTOM_DAYS = 3650;
+
+  const todayLocal = () => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  };
+
+  const toIsoDate = (d) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+  const endDateFor = (days) => {
+    const d = todayLocal();
+    d.setDate(d.getDate() + days);
+    return toIsoDate(d);
+  };
+
+  const setCustomDays = (seriesId, days) => {
+    if (days > 0) {
+      handleIndividualSeriesDaysButton(seriesId, days);
+      return;
+    }
+    resetPayAmount(seriesId);
+    setSeriesAccessDays(prev => ({ ...prev, [seriesId]: 0 }));
+    if (!initialAccess.has(seriesId)) {
+      setSelectedSeries(prev => {
+        const updated = new Set(prev);
+        updated.delete(seriesId);
+        return updated;
+      });
+    }
+  };
+
+  const handleCustomDays = (seriesId, raw) => {
+    const clean = String(raw).replace(/\D/g, '');
+    const days = clean === '' ? 0 : Math.min(parseInt(clean, 10), MAX_CUSTOM_DAYS);
+    setCustomDays(seriesId, days);
+  };
+
+  const handleCustomEndDate = (seriesId, value) => {
+    if (!value) {
+      setCustomDays(seriesId, 0);
+      return;
+    }
+    const [y, m, d] = value.split('-').map(Number);
+    const target = new Date(y, m - 1, d);
+    const days = Math.round((target - todayLocal()) / 86400000);
+    setCustomDays(seriesId, Math.max(0, Math.min(days, MAX_CUSTOM_DAYS)));
+  };
+
   const handleSeriesToggle = (seriesId) => {
     resetPayAmount(seriesId);
     setSelectedSeries(prev => {
@@ -536,6 +585,32 @@ const UsersTable = () => {
                                         />
                                     ))}
                                 </div>
+                                <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
+                                    <span className="whitespace-nowrap">Boshqa muddat:</span>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        value={selectedSeries.has(s.id) && (seriesAccessDays[s.id] || 0) > 0 ? seriesAccessDays[s.id] : ''}
+                                        onChange={(e) => handleCustomDays(s.id, e.target.value)}
+                                        placeholder="kun"
+                                        className="w-20 p-1.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-right text-white"
+                                    />
+                                    <span>kun yoki</span>
+                                    <input
+                                        type="date"
+                                        min={endDateFor(1)}
+                                        max={endDateFor(MAX_CUSTOM_DAYS)}
+                                        value={selectedSeries.has(s.id) && (seriesAccessDays[s.id] || 0) > 0 ? endDateFor(seriesAccessDays[s.id]) : ''}
+                                        onChange={(e) => handleCustomEndDate(s.id, e.target.value)}
+                                        className="p-1.5 bg-[#0f111a] border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-white [color-scheme:dark]"
+                                    />
+                                    <span>gacha</span>
+                                </div>
+                                {selectedSeries.has(s.id) && (seriesAccessDays[s.id] || 0) > 0 && (
+                                    <p className="text-[11px] text-purple-300/80">
+                                        Kirish bugundan {seriesAccessDays[s.id]} kun, {endDateFor(seriesAccessDays[s.id]).split('-').reverse().join('.')} gacha beriladi.
+                                    </p>
+                                )}
                                 {selectedSeries.has(s.id) && initialAccess.has(s.id) && !(seriesAccessDays[s.id] > 0) && (
                                     <p className="text-[11px] text-green-400/80">✓ Joriy muddat o'zgarmaydi. Uzaytirish uchun muddatni tanlang.</p>
                                 )}
