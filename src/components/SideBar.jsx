@@ -91,14 +91,14 @@ const Sidebar = () => {
         `}
       >
         {/* Logo/Header */}
-        <div className="mb-8 pt-6 pb-4 border-b border-gray-700 md:pt-0 md:border-none">
+        <div className="shrink-0 mb-8 pt-6 pb-4 border-b border-gray-700 md:pt-0 md:border-none">
           <h1 className="text-2xl font-extrabold text-white tracking-wider text-center">
             <span className="text-blue-500">ADMIN</span> PANEL
           </h1>
         </div>
 
         {/* Navigatsiya elementlari */}
-        <nav className="flex-grow space-y-2">
+        <nav className="flex-1 min-h-0 overflow-y-auto space-y-2 pr-1 -mr-1">
           {navItems.map((item) => (
             <NavLink 
               key={item.to}
@@ -111,7 +111,7 @@ const Sidebar = () => {
         </nav>
 
         {/* Profildan chiqish tugmasi */}
-        <div className="mt-auto pt-6 border-t border-gray-700">
+        <div className="shrink-0 mt-4 pt-4 border-t border-gray-700">
           <button
             onClick={handleLogoutClick}
             className="w-full flex items-center justify-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-xl transition duration-200 shadow-lg"
