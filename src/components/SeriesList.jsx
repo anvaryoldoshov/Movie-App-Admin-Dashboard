@@ -12,9 +12,11 @@ import {
   getGenres,
   reorderSeries,
   getNextVideoUrl,
+  updateEpisodeSchedule,
 } from "../services/api";
+import PublishSchedule, { emptySchedule, scheduleFromEpisode, appendSchedule, validateSchedule, scheduleToIso, formatTashkent } from "./PublishSchedule";
 import Episode from "./Episode";
-import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift } from 'lucide-react';
+import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift, Clock } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
@@ -51,6 +53,7 @@ const SeriesList = () => {
   const [formErrors, setFormErrors] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [addEpisodeSeriesId, setAddEpisodeSeriesId] = useState(null);
+  const [episodeSchedule, setEpisodeSchedule] = useState(emptySchedule());
   const [isBackfilling, setIsBackfilling] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState({ isOpen: false, type: 'danger', title: '', message: '', onConfirm: null });
   const [draggedId, setDraggedId] = useState(null);
@@ -259,6 +262,7 @@ const SeriesList = () => {
   const handleEditEpisodeClick = (episode) => {
     setAddEpisodeSeriesId(null); 
     setEditEpisode(episode);
+    setEpisodeSchedule(scheduleFromEpisode(episode));
     setFormData({
       title: episode.title,
       episodeNumber: episode.episodeNumber,
@@ -395,6 +399,11 @@ const SeriesList = () => {
   const handleUpdateEpisode = async (e) => {
     e.preventDefault();
     if (!validateForm(true)) return;
+    const scheduleError = validateSchedule(episodeSchedule);
+    if (scheduleError) {
+      setError(scheduleError);
+      return;
+    }
 
     const form = new FormData();
     form.append("title", formData.title);
@@ -405,7 +414,13 @@ const SeriesList = () => {
     }
 
     try {
-      const updatedEpisode = await updateEpisode(editEpisode.id, form);
+      let updatedEpisode = await updateEpisode(editEpisode.id, form);
+      if (editEpisode.scheduled || episodeSchedule.mode === "SCHEDULE" || !!editEpisode.notifyBuyers !== episodeSchedule.notifyBuyers) {
+        updatedEpisode = await updateEpisodeSchedule(editEpisode.id, {
+          publishAt: scheduleToIso(episodeSchedule),
+          notifyBuyers: episodeSchedule.notifyBuyers,
+        });
+      }
       setEpisodes((prev) => ({
         ...prev,
         [editEpisode.seriesId]: prev[editEpisode.seriesId].map((ep) =>
@@ -434,6 +449,31 @@ const SeriesList = () => {
   };
 
   // Original handleDeleteEpisode
+  const handleReleaseNow = (episode, seriesId) => {
+    setConfirmDialog({
+      isOpen: true, type: 'warning',
+      title: "Hozir chiqarish",
+      message: `"${episode.title}" hozir ilovada paydo bo'ladi va eslatma so'raganlarga xabar ketadi. Davom etasizmi?`,
+      confirmText: "Ha, chiqarish",
+      onConfirm: async () => {
+        closeConfirm();
+        try {
+          const updated = await updateEpisodeSchedule(episode.id, { publishAt: null, notifyBuyers: !!episode.notifyBuyers });
+          setEpisodes((prev) => ({
+            ...prev,
+            [seriesId]: prev[seriesId].map((ep) => (ep.id === episode.id ? updated : ep)),
+          }));
+          setError(null);
+          setSuccess("Epizod chiqarildi");
+          setTimeout(() => setSuccess(null), 3000);
+        } catch (err) {
+          setError(typeof err === "string" ? err : "Epizodni chiqarib bo'lmadi.");
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+      },
+    });
+  };
+
   const handleDeleteEpisode = (episodeId, seriesId) => {
     setConfirmDialog({
       isOpen: true, type: 'danger',
@@ -485,6 +525,12 @@ const SeriesList = () => {
   const handleAddEpisode = async (e, seriesId) => {
     e.preventDefault();
     if (!validateForm(true)) return;
+    const scheduleError = validateSchedule(episodeSchedule);
+    if (scheduleError) {
+      setError(scheduleError);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
 
     const form = new FormData();
     form.append("title", formData.title);
@@ -493,6 +539,7 @@ const SeriesList = () => {
     if (formData.image) {
       form.append("image", formData.image);
     }
+    appendSchedule(form, episodeSchedule);
 
     try {
       const newEpisode = await createEpisode(seriesId, form);
@@ -513,7 +560,10 @@ const SeriesList = () => {
       }));
       setImagePreview(null);
       setError(null);
-      setSuccess("Episode added successfully");
+      setSuccess(newEpisode.scheduled
+        ? `Epizod rejalashtirildi: ${formatTashkent(newEpisode.publishAt)} da chiqadi`
+        : "Episode added successfully");
+      setEpisodeSchedule((prev) => ({ ...emptySchedule(), notifyBuyers: prev.notifyBuyers }));
       setTimeout(() => setSuccess(null), 3000);
       setIsSuggesting(true);
       suggestVideoUrl(seriesId);
@@ -535,6 +585,7 @@ const SeriesList = () => {
           setEditEpisode(null);
           // Yangi formani ochish, nom/raqam/link Bunny'dan taklif kelgach to'ldiriladi
           setAddEpisodeSeriesId(seriesId);
+          setEpisodeSchedule(emptySchedule());
           setFormData({
             title: "",
             episodeNumber: "",
@@ -573,7 +624,7 @@ const SeriesList = () => {
         type={confirmDialog.type}
         title={confirmDialog.title}
         message={confirmDialog.message}
-        confirmText="Ha, o'chirish"
+        confirmText={confirmDialog.confirmText || "Ha, o'chirish"}
         onConfirm={confirmDialog.onConfirm}
         onCancel={closeConfirm}
       />
@@ -744,13 +795,27 @@ const SeriesList = () => {
                                 {ep.free && (
                                   <Gift className="w-3 h-3 text-yellow-400 flex-shrink-0" />
                                 )}
+                                {ep.scheduled && (
+                                  <span className="flex items-center gap-1 text-sky-300 flex-shrink-0 ml-1" title="Rejalashtirilgan — shu vaqtgacha ilovada 'Tez kunda'">
+                                    <Clock className="w-3 h-3" />{formatTashkent(ep.publishAt)}
+                                  </span>
+                                )}
                                 {(ep.durationHours || ep.durationMinutes || ep.durationSeconds) && (
                                   <span className="text-gray-500 text-xs ml-1">
-                                    Ã¢ÂÂ±{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
+                                    ⏱{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
                                   </span>
                                 )}
                             </span>
                             <div className="flex space-x-2 flex-shrink-0 ml-2">
+                                {ep.scheduled && (
+                                  <button
+                                      onClick={() => handleReleaseNow(ep, s.id)}
+                                      className="text-sky-400 hover:text-sky-300 p-0.5"
+                                      title="Hozir chiqarish"
+                                  >
+                                      <Zap className="w-3 h-3" />
+                                  </button>
+                                )}
                                 <button
                                     onClick={() => handleEditEpisodeClick(ep)}
                                     className="text-indigo-400 hover:text-indigo-300 p-0.5"
@@ -922,13 +987,21 @@ const SeriesList = () => {
                                     )}
                                 </div>
 
+                                <PublishSchedule
+                                    compact
+                                    value={episodeSchedule}
+                                    onChange={setEpisodeSchedule}
+                                    episodeNumber={formData.episodeNumber}
+                                    lastScheduledAt={(episodes[s.id] || []).filter((ep) => ep && ep.scheduled && ep.publishAt).map((ep) => ep.publishAt).sort().pop()}
+                                />
+
                                 <button
                                     type="submit"
                                     disabled={isSuggesting}
                                     className="w-full bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition-colors font-bold flex items-center justify-center space-x-2 mt-4 shadow-md shadow-indigo-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    <Save className="w-5 h-5" />
-                                    <span>Saqlash va Qo'shish</span>
+                                    {episodeSchedule.mode === "SCHEDULE" ? <Clock className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+                                    <span>{episodeSchedule.mode === "SCHEDULE" ? "Rejalashtirish" : "Saqlash va Qo'shish"}</span>
                                 </button>
                             </form>
                         </div>
@@ -1254,6 +1327,17 @@ const SeriesList = () => {
                     />
                   )}
                 </div>
+
+                <PublishSchedule
+                  value={episodeSchedule}
+                  onChange={setEpisodeSchedule}
+                  episodeNumber={formData.episodeNumber}
+                />
+                {!editEpisode.scheduled && episodeSchedule.mode === "SCHEDULE" && (
+                  <p className="text-xs text-yellow-400 -mt-2">
+                    Diqqat: bu qism hozir ilovada bor. Rejalashtirsangiz, belgilangan vaqtgacha ilovadan yashiriladi.
+                  </p>
+                )}
 
                 <div className="flex justify-end space-x-3 pt-4">
                   <button type="button" onClick={() => { setEditEpisode(null); setFormData({ title: "", episodeNumber: "", videoUrl: "", image: null, status: "", monthlyPrice: "", quarterlyPrice: "" }); setFormErrors({}); setImagePreview(null); }}

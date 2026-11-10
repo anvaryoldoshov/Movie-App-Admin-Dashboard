@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link as RouterLink } from "react-router-dom";
 import { getSeries, getEpisodesBySeries, createEpisode, getNextVideoUrl } from "../services/api";
-import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift, Loader2 } from 'lucide-react';
+import { Film, Hash, Link, Image, Save, ChevronDown, CheckCircle, XCircle, Gift, Loader2, Clock } from 'lucide-react';
+import PublishSchedule, { emptySchedule, appendSchedule, validateSchedule, formatTashkent } from "./PublishSchedule";
 
 const LAST_SERIES_ID_KEY = "movieapp_last_episode_series_id";
 
@@ -15,6 +16,7 @@ const Movies = () => {
     videoUrl: "",
   });
   const [thumbFile, setThumbFile] = useState(null);
+  const [schedule, setSchedule] = useState(emptySchedule());
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   // Bunny'dan taklif so'ralayotgan payt (nom/raqam/link hali yozilmagan) UI'da
@@ -95,6 +97,12 @@ const Movies = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSeriesId]);
 
+  const lastScheduledAt = episodes
+    .filter((ep) => ep && ep.scheduled && ep.publishAt)
+    .map((ep) => ep.publishAt)
+    .sort()
+    .pop();
+
   const handleCreate = async (e) => {
     e.preventDefault();
     setError("");
@@ -104,18 +112,27 @@ const Movies = () => {
       setError("Iltimos, barcha maydonlarni to‘ldiring.");
       return;
     }
+    const scheduleError = validateSchedule(schedule);
+    if (scheduleError) {
+      setError(scheduleError);
+      return;
+    }
 
     const formData = new FormData();
     formData.append("title", newEpisode.title);
     formData.append("episodeNumber", newEpisode.episodeNumber);
     formData.append("videoUrl", newEpisode.videoUrl);
     if (thumbFile) formData.append("image", thumbFile);
+    appendSchedule(formData, schedule);
 
     try {
       const created = await createEpisode(selectedSeriesId, formData);
       const updatedEpisodes = [...episodes, created];
       setEpisodes(updatedEpisodes);
-      setSuccessMessage(`✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
+      setSuccessMessage(created.scheduled
+        ? `🕒 ${newEpisode.title} rejalashtirildi: ${formatTashkent(created.publishAt)} da chiqadi.`
+        : `✅ Yangi epizod (${newEpisode.title}) muvaffaqiyatli yaratildi!`);
+      setSchedule((prev) => ({ ...emptySchedule(), notifyBuyers: prev.notifyBuyers }));
 
       // Formani tozalash, keyingi epizod uchun nom/raqam/video URL avtomatik taklif qilish
       setNewEpisode({ title: "", episodeNumber: "", videoUrl: "" });
@@ -305,14 +322,21 @@ const Movies = () => {
             </div>
           </div>
 
+          <PublishSchedule
+            value={schedule}
+            onChange={setSchedule}
+            episodeNumber={newEpisode.episodeNumber}
+            lastScheduledAt={lastScheduledAt}
+          />
+
           {/* Submit Button */}
           <button
             type="submit"
             disabled={isSuggesting}
             className="w-full flex items-center justify-center space-x-2 py-3 bg-blue-600 text-white font-semibold text-lg rounded-lg hover:bg-blue-700 transition duration-300 ease-in-out shadow-lg shadow-blue-500/50 transform hover:scale-[1.01] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            <Save className="w-5 h-5" />
-            <span>Epizodni Yaratish</span>
+            {schedule.mode === "SCHEDULE" ? <Clock className="w-5 h-5" /> : <Save className="w-5 h-5" />}
+            <span>{schedule.mode === "SCHEDULE" ? "Epizodni Rejalashtirish" : "Epizodni Yaratish"}</span>
           </button>
         </form>
       </div>

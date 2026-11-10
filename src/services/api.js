@@ -394,6 +394,16 @@ export const updateEpisode = async (episodeId, formData) => {
   }
 };
 
+export const updateEpisodeSchedule = async (episodeId, { publishAt, notifyBuyers }) => {
+  try {
+    const response = await api.put(`/admin/series/episodes/${episodeId}/schedule`, { publishAt, notifyBuyers });
+    return response.data;
+  } catch (error) {
+    console.error('Update episode schedule error:', error.response?.data || error.message);
+    throw error.response?.data?.message || (typeof error.response?.data === 'string' ? error.response.data : "Chiqish vaqtini saqlab bo'lmadi");
+  }
+};
+
 export const deleteEpisode = async (episodeId) => {
   try {
     const response = await api.delete(`/admin/series/episodes/${episodeId}`);
