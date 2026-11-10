@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import { pushNotification, testPushNotification, getRecentSounds } from '../services/api';
+import { pushNotification, testPushNotification, getRecentSounds, getAllSeries, getNotificationAudienceCount } from '../services/api';
 import NotificationPreview from './NotificationPreview';
 
 let extraFieldSeq = 0;
@@ -12,6 +12,12 @@ const extraFieldsToObject = (fields) =>
     if (k) acc[k] = value;
     return acc;
   }, {});
+
+const AUDIENCE_OPTIONS = [
+  { value: 'ACTIVE', label: 'Amaldagi obunachilar', hint: "Hozir obunasi faol bo'lganlar" },
+  { value: 'EXPIRED', label: 'Eski obunachilar', hint: 'Avval sotib olgan, obunasi tugaganlar' },
+  { value: 'ALL', label: 'Hammasi', hint: 'Amaldagi va eski obunachilar' },
+];
 
 const SendNotification = () => {
   const [formData, setFormData] = useState({
@@ -28,10 +34,43 @@ const SendNotification = () => {
   const [testToken, setTestToken] = useState('');
   const [testSending, setTestSending] = useState(false);
   const [extraFields, setExtraFields] = useState([]);
+  const [target, setTarget] = useState('ALL');
+  const [seriesList, setSeriesList] = useState([]);
+  const [selectedSeriesIds, setSelectedSeriesIds] = useState([]);
+  const [seriesSearch, setSeriesSearch] = useState('');
+  const [audience, setAudience] = useState('ACTIVE');
+  const [audienceCount, setAudienceCount] = useState(null);
+  const [counting, setCounting] = useState(false);
 
   useEffect(() => {
     fetchRecentSounds();
+    getAllSeries()
+      .then((data) => setSeriesList(Array.isArray(data) ? data : []))
+      .catch(() => setSeriesList([]));
   }, []);
+
+  useEffect(() => {
+    if (target !== 'SERIES' || selectedSeriesIds.length === 0) {
+      setAudienceCount(null);
+      return;
+    }
+    let cancelled = false;
+    setCounting(true);
+    const timer = setTimeout(() => {
+      getNotificationAudienceCount({ seriesIds: selectedSeriesIds, audience })
+        .then((data) => { if (!cancelled) setAudienceCount(data); })
+        .catch(() => { if (!cancelled) setAudienceCount(null); })
+        .finally(() => { if (!cancelled) setCounting(false); });
+    }, 300);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [target, selectedSeriesIds, audience]);
+
+  const toggleSeries = (id) =>
+    setSelectedSeriesIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const filteredSeries = seriesList.filter((s) =>
+    (s.title || '').toLowerCase().includes(seriesSearch.trim().toLowerCase())
+  );
 
   const fetchRecentSounds = async () => {
     const sounds = await getRecentSounds();
@@ -78,11 +117,30 @@ const SendNotification = () => {
       return;
     }
 
+    const targeted = target === 'SERIES';
+    if (targeted && selectedSeriesIds.length === 0) {
+      setError('Kamida bitta serialni tanlang.');
+      return;
+    }
+    if (targeted && audienceCount && audienceCount.users === 0) {
+      setError("Tanlangan seriallar bo'yicha foydalanuvchi topilmadi.");
+      return;
+    }
+    const confirmText = targeted
+      ? `Xabar ${audienceCount ? audienceCount.users : '?'} ta foydalanuvchiga yuboriladi. Davom etasizmi?`
+      : 'Xabar BARCHA foydalanuvchilarga yuboriladi. Davom etasizmi?';
+    if (!window.confirm(confirmText)) return;
+
     setSending(true);
     try {
-      const result = await pushNotification({ ...formData, data: extraFieldsToObject(extraFields) });
+      const result = await pushNotification({
+        ...formData,
+        data: extraFieldsToObject(extraFields),
+        seriesIds: targeted ? selectedSeriesIds : undefined,
+        audience: targeted ? audience : undefined,
+      });
       setSuccess(
-        `Yuborildi! Muvaffaqiyatli: ${result.success ?? 0}, Xato: ${result.failed ?? 0}`
+        `Yuborildi! Foydalanuvchilar: ${result.targetUsers ?? 0}, muvaffaqiyatli: ${result.success ?? 0}, xato: ${result.failed ?? 0}`
       );
       resetForm();
       fetchRecentSounds();
@@ -128,7 +186,7 @@ const SendNotification = () => {
             Push-notification yuborish
           </h1>
           <p className="text-gray-400 text-center mt-2">
-            Barcha foydalanuvchilarga push-xabar yuboring.
+            Barcha foydalanuvchilarga yoki tanlangan seriallarni sotib olganlarga push-xabar yuboring.
           </p>
         </div>
 
@@ -147,6 +205,104 @@ const SendNotification = () => {
 
         <div className="bg-[#1c1e2c] p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-700">
           <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-6">
+
+            {/* Kimga */}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">Kimga</label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'ALL', label: 'Barcha foydalanuvchilar' },
+                  { value: 'SERIES', label: 'Serial xaridorlari' },
+                ].map((opt) => (
+                  <button
+                    type="button"
+                    key={opt.value}
+                    onClick={() => setTarget(opt.value)}
+                    className={`px-4 py-2 text-sm rounded-lg border transition
+                      ${target === opt.value
+                        ? 'bg-blue-600 border-blue-500 text-white'
+                        : 'bg-[#0f111a] border-gray-600 text-gray-300 hover:border-blue-500 hover:text-white'
+                      }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+
+              {target === 'SERIES' && (
+                <div className="mt-4 space-y-4 p-4 bg-[#0f111a] border border-gray-700 rounded-lg">
+                  <div>
+                    <p className="text-xs text-gray-400 mb-2">Seriallar ({selectedSeriesIds.length} ta tanlangan)</p>
+                    <input
+                      type="text"
+                      value={seriesSearch}
+                      onChange={(e) => setSeriesSearch(e.target.value)}
+                      placeholder="Serial nomi bo'yicha qidirish"
+                      className="block w-full p-2.5 mb-2 bg-[#1c1e2c] border border-gray-600 rounded-lg text-white text-sm focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <div className="max-h-56 overflow-y-auto space-y-1 pr-1">
+                      {filteredSeries.map((s) => (
+                        <label
+                          key={s.id}
+                          className="flex items-center gap-3 px-2 py-1.5 rounded hover:bg-[#1c1e2c] cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSeriesIds.includes(s.id)}
+                            onChange={() => toggleSeries(s.id)}
+                            className="accent-blue-500"
+                          />
+                          <span className="flex-1 text-gray-200">{s.title}</span>
+                          {s.subscriptionBased && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-600/30 text-amber-300">
+                              Umumiy obuna
+                            </span>
+                          )}
+                        </label>
+                      ))}
+                      {filteredSeries.length === 0 && (
+                        <p className="text-xs text-gray-500 px-2 py-1">Serial topilmadi</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs text-gray-400 mb-2">Qaysi xaridorlarga</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {AUDIENCE_OPTIONS.map((opt) => (
+                        <button
+                          type="button"
+                          key={opt.value}
+                          onClick={() => setAudience(opt.value)}
+                          className={`text-left px-3 py-2 rounded-lg border transition
+                            ${audience === opt.value
+                              ? 'bg-indigo-600/30 border-indigo-500 text-white'
+                              : 'bg-[#1c1e2c] border-gray-600 text-gray-300 hover:border-indigo-500'
+                            }`}
+                        >
+                          <span className="block text-sm font-medium">{opt.label}</span>
+                          <span className="block text-[11px] text-gray-400">{opt.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <p className="text-sm text-gray-300">
+                    {selectedSeriesIds.length === 0
+                      ? 'Serial tanlang.'
+                      : counting
+                        ? 'Hisoblanmoqda...'
+                        : audienceCount
+                          ? `Xabar ${audienceCount.users} ta foydalanuvchiga (${audienceCount.devices} ta qurilma) yuboriladi.`
+                          : "Sonini aniqlab bo'lmadi."}
+                  </p>
+                  <p className="text-[11px] text-gray-500">
+                    "Umumiy obuna" belgili serial tanlansa, premium obunachilar ham qo'shiladi. Bitta serial tanlansa,
+                    bildirishnoma bosilganda o'sha serial ochiladi.
+                  </p>
+                </div>
+              )}
+            </div>
 
             {/* Sarlavha */}
             <div>
@@ -319,7 +475,7 @@ const SendNotification = () => {
                 disabled={sending}
                 className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition duration-300 shadow-lg min-w-[160px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                {sending ? 'Yuborilmoqda...' : 'Barchaga yuborish'}
+                {sending ? 'Yuborilmoqda...' : target === 'SERIES' ? 'Xaridorlarga yuborish' : 'Barchaga yuborish'}
               </button>
             </div>
           </form>

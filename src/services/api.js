@@ -544,7 +544,7 @@ export const getAllUsersWithAccess = async () => {
 }
 
 // NOTIFICATION FUNCTIONS
-export const pushNotification = async ({ title, body, sound, image, data }) => {
+export const pushNotification = async ({ title, body, sound, image, data, seriesIds, audience }) => {
   try {
     const formData = new FormData();
     formData.append('title', title);
@@ -552,6 +552,10 @@ export const pushNotification = async ({ title, body, sound, image, data }) => {
     if (sound) formData.append('sound', sound);
     if (image) formData.append('image', image);
     if (data && Object.keys(data).length > 0) formData.append('data', JSON.stringify(data));
+    if (seriesIds && seriesIds.length > 0) {
+      seriesIds.forEach((id) => formData.append('seriesIds', id));
+      formData.append('audience', audience || 'ACTIVE');
+    }
 
     const response = await api.post('/admin/notifications/push', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -561,6 +565,14 @@ export const pushNotification = async ({ title, body, sound, image, data }) => {
     console.error('Push notification error:', error.response?.data || error.message);
     throw error.response?.data?.message || 'Push-notification yuborishda xatolik';
   }
+};
+
+export const getNotificationAudienceCount = async ({ seriesIds, audience }) => {
+  const params = new URLSearchParams();
+  seriesIds.forEach((id) => params.append('seriesIds', id));
+  params.append('audience', audience || 'ACTIVE');
+  const { data } = await api.get(`/admin/notifications/audience-count?${params.toString()}`);
+  return data;
 };
 
 export const testPushNotification = async ({ token, title, body, sound, image, data }) => {
