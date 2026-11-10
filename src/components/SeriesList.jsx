@@ -352,8 +352,8 @@ const SeriesList = () => {
       if (!formData.videoUrl.trim()) errors.videoUrl = "Video URL is required";
     } else {
       if (!formData.status) errors.status = "Status is required";
-      if (editSeries && editSeries.subscriptionBased && !formData.subscriptionBased
-          && !formData.monthlyPrice && !formData.quarterlyPrice) {
+      if (editSeries && !formData.subscriptionBased && !formData.monthlyPrice && !formData.quarterlyPrice
+          && (editSeries.subscriptionBased || editSeries.monthlyPrice != null || editSeries.quarterlyPrice != null)) {
         errors.price = "Alohida sotiladigan serialga kamida bitta narx kiriting.";
       }
     }
@@ -369,8 +369,10 @@ const SeriesList = () => {
     const form = new FormData();
     form.append("title", formData.title);
     form.append("status", formData.status);
-    if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
-    if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
+    if (!formData.subscriptionBased) {
+      if (formData.monthlyPrice) form.append("monthlyPrice", formData.monthlyPrice);
+      if (formData.quarterlyPrice) form.append("quarterlyPrice", formData.quarterlyPrice);
+    }
     // Galochka olib tashlansa havola yuborilmaydi — backend Telegram ma'lumotini tozalaydi.
     if (formData.telegramFree && formData.telegramFreeUrl.trim()) {
       form.append("telegramFreeUrl", formData.telegramFreeUrl.trim());
@@ -1192,7 +1194,7 @@ const SeriesList = () => {
                 {/* Narx maydonlari */}
                 {formData.subscriptionBased ? (
                   <p className="text-xs text-gray-500 -mt-2">
-                    Umumiy obunadagi serialda narx obuna tarifidan olinadi. Serialning o'z narxi saqlanib qoladi — alohida sotuvga qaytarsangiz yana ishlaydi.
+                    Umumiy obunadagi serialda narx obuna tarifidan olinadi, serialning o'z narxi o'chiriladi (aks holda ilova uni alohida ham sotib qo'yadi). Alohida sotuvga qaytarsangiz, narxni qayta kiritasiz.
                   </p>
                 ) : (
                 <div className="grid grid-cols-2 gap-4">
