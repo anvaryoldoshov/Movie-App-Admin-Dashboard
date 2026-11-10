@@ -4,7 +4,9 @@ import {
   createSubscriptionPlan,
   updateSubscriptionPlan,
   deleteSubscriptionPlan,
+  getAllSeries,
 } from "../services/api";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Pencil,
@@ -15,6 +17,8 @@ import {
   CreditCard,
   ToggleLeft,
   ToggleRight,
+  AlertTriangle,
+  Film,
 } from "lucide-react";
 
 const emptyForm = {
@@ -40,6 +44,7 @@ const SubscriptionPlans = () => {
   const [message, setMessage] = useState(null); // { type: 'success'|'error', text }
   const [deletingId, setDeletingId] = useState(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+  const [planSeries, setPlanSeries] = useState(null);
 
   const loadPlans = async () => {
     setLoading(true);
@@ -55,7 +60,12 @@ const SubscriptionPlans = () => {
 
   useEffect(() => {
     loadPlans();
+    getAllSeries()
+      .then((data) => setPlanSeries((Array.isArray(data) ? data : []).filter((x) => x.subscriptionBased)))
+      .catch(() => setPlanSeries(null));
   }, []);
+
+  const noSeriesInPlan = Array.isArray(planSeries) && planSeries.length === 0;
 
   const openCreate = () => {
     setEditingPlan(null);
@@ -93,6 +103,12 @@ const SubscriptionPlans = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const activating = formData.active && !(editingPlan && editingPlan.active);
+    if (activating && noSeriesInPlan && !window.confirm(
+      "Umumiy obunada hozir bitta ham serial yo'q. Tarifni faollashtirsangiz, foydalanuvchilar hech narsa ochmaydigan obunaga pul to'lashi mumkin. Baribir faollashtirasizmi?"
+    )) {
+      return;
+    }
     setSubmitting(true);
     setMessage(null);
     try {
@@ -289,6 +305,12 @@ const SubscriptionPlans = () => {
                   {formData.active ? "oladi" : "olmaydi"}
                 </span>
               </label>
+              {formData.active && noSeriesInPlan && (
+                <p className="flex items-start gap-2 text-xs text-yellow-400 bg-yellow-900/20 border border-yellow-700/40 rounded-lg p-3">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  Umumiy obunada hozir bitta ham serial yo'q — tarif hech narsani ochmaydi. Avval "Seriallar ro'yxati"da kerakli seriallarni "Umumiy obunaga kiradi" qilib belgilang.
+                </p>
+              )}
 
               {/* Buttons */}
               <div className="flex justify-end gap-3 pt-2">
@@ -356,6 +378,25 @@ const SubscriptionPlans = () => {
                   </div>
                   {plan.description && (
                     <p className="text-gray-400 text-sm mb-2">{plan.description}</p>
+                  )}
+                  {Array.isArray(planSeries) && (
+                    planSeries.length > 0 ? (
+                      <p className="flex items-start gap-1.5 text-xs text-gray-400 mb-2">
+                        <Film className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-indigo-400" />
+                        <span>
+                          Bu tarifga <b className="text-gray-200">{planSeries.length} ta serial</b> kiradi:{" "}
+                          {planSeries.map((x) => x.title).join(", ")}
+                        </span>
+                      </p>
+                    ) : (
+                      <p className="flex items-start gap-1.5 text-xs text-yellow-400 mb-2">
+                        <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                        <span>
+                          Umumiy obunada bitta ham serial yo'q.{" "}
+                          <Link to="/series-list" className="underline hover:text-yellow-300">Seriallar ro'yxati</Link>dan qo'shing.
+                        </span>
+                      </p>
+                    )
                   )}
                   <div className="flex flex-wrap gap-3">
                     <div className="flex items-center gap-1.5 text-sm">
