@@ -16,12 +16,13 @@ import {
 } from "../services/api";
 import PublishSchedule, { emptySchedule, scheduleFromEpisode, appendSchedule, validateSchedule, scheduleToIso, formatTashkent } from "./PublishSchedule";
 import Episode from "./Episode";
-import { Loader2, X, Plus, Edit3, Trash2, ChevronDown, ChevronUp, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift, Clock } from 'lucide-react';
+import { Loader2, X, Plus, Edit3, Trash2, Image, Save, AlertTriangle, CheckCircle, Video, List, Zap, Minus, GripVertical, ArrowUp, ArrowDown, Gift, Clock } from 'lucide-react';
 import ConfirmDialog from './ConfirmDialog';
 
 // Rasm manzilini to'g'rilash uchun yordamchi funksiya
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return '';
+    if (/^https?:\/\//.test(imagePath)) return imagePath;
     const BASE_URL = process.env.REACT_APP_API_URL || 'https://api.tarixiykinolar.uz';
     return `${BASE_URL}${imagePath}`;
 };
@@ -170,6 +171,10 @@ const SeriesList = () => {
   // Original useEffect (escape key)
   useEffect(() => {
     const handleEscape = (e) => {
+      if (e.key === "Escape" && !editSeries && !editEpisode && !addEpisodeSeriesId && expandedSeries) {
+        setExpandedSeries(null);
+        return;
+      }
       if (e.key === "Escape" && (editSeries || editEpisode || addEpisodeSeriesId)) {
         setEditSeries(null);
         setEditEpisode(null);
@@ -191,7 +196,18 @@ const SeriesList = () => {
     };
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [editSeries, editEpisode, addEpisodeSeriesId]);
+  }, [editSeries, editEpisode, addEpisodeSeriesId, expandedSeries]);
+
+  const expandedItem = series.find((item) => item.id === expandedSeries) || null;
+
+  useEffect(() => {
+    if (!expandedSeries) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [expandedSeries]);
 
   // Original fetchEpisodes
   const fetchEpisodes = async (seriesId) => {
@@ -675,11 +691,9 @@ const SeriesList = () => {
                 className="w-full h-full object-cover transition duration-300 group-hover:opacity-80"
               />
               <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 transition-opacity">
-                {expandedSeries === s.id ? (
-                    <ChevronUp className="w-10 h-10 text-indigo-400 p-1 bg-gray-900/50 rounded-full" />
-                ) : (
-                    <ChevronDown className="w-10 h-10 text-indigo-400 p-1 bg-gray-900/50 rounded-full" />
-                )}
+                <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-900/70 text-indigo-300 text-xs font-semibold">
+                  <List className="w-4 h-4" /> Epizodlar
+                </span>
               </div>
             </div>
             
@@ -758,100 +772,69 @@ const SeriesList = () => {
               </div>
             </div>
             
-            {/* Epizodlar Ro'yxati va Qo'shish Tugmasi (Expanded qism) */}
-            {expandedSeries === s.id && (
-                <div className="p-4 border-t border-gray-700/70 bg-gray-800/80">
-                    <div className="mb-3">
-                        <h3 className="text-sm font-bold text-indigo-400 flex items-center space-x-2 whitespace-nowrap">
-                          <List className="w-4 h-4"/>
-                          <span>Epizodlar ({episodes[s.id]?.length || 0}):</span>
-                        </h3>
-                        <button
-                            onClick={() => handleBackfillDurations(s.id)}
-                            disabled={isBackfilling}
-                            className="mt-2 flex items-center justify-center gap-1.5 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-full text-xs font-medium transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap w-fit"
-                            title="Hajmi/davomiyligi yozilmagan epizodlarni Bunny'dan qayta yuklash"
-                        >
-                            {isBackfilling ? (
-                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            ) : (
-                              <Zap className="w-3.5 h-3.5 text-yellow-400" />
-                            )}
-                            <span>Hajm/davomiylikni yangilash</span>
-                        </button>
-                    </div>
+          </div>
+        ))}
+      </div>
 
-                    {/* IXCHAMLASHTIRILGAN EPIZODLAR RO'YXATI */}
-                    <div className="space-y-2 max-h-32 overflow-y-auto pr-1 mb-4 border-b border-gray-700/50 pb-3 custom-scrollbar">
-                      {episodes[s.id]?.length > 0 ? (
-                        episodes[s.id].map((ep) => (
-                          <div key={ep.id} className="flex items-center justify-between text-xs bg-gray-700/50 p-2 rounded-lg hover:bg-gray-700 transition">
-                            <span className="truncate flex items-center space-x-1 font-medium text-gray-300">
-                                <Video className="w-3 h-3 text-blue-400 flex-shrink-0" />
-                                {ep.seasonNumber != null && (
-                                  <span className="text-orange-400 text-xs flex-shrink-0">S{ep.seasonNumber}</span>
-                                )}
-                                <span>{ep.episodeNumber}. {ep.title}</span>
-                                {ep.free && (
-                                  <Gift className="w-3 h-3 text-yellow-400 flex-shrink-0" />
-                                )}
-                                {ep.scheduled && (
-                                  <span className="flex items-center gap-1 text-sky-300 flex-shrink-0 ml-1" title="Rejalashtirilgan — shu vaqtgacha ilovada 'Tez kunda'">
-                                    <Clock className="w-3 h-3" />{formatTashkent(ep.publishAt)}
-                                  </span>
-                                )}
-                                {(ep.durationHours || ep.durationMinutes || ep.durationSeconds) && (
-                                  <span className="text-gray-500 text-xs ml-1">
-                                    ⏱{ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2,"0")}:{String(ep.durationSeconds || 0).padStart(2,"0")}
-                                  </span>
-                                )}
-                            </span>
-                            <div className="flex space-x-2 flex-shrink-0 ml-2">
-                                {ep.scheduled && (
-                                  <button
-                                      onClick={() => handleReleaseNow(ep, s.id)}
-                                      className="text-sky-400 hover:text-sky-300 p-0.5"
-                                      title="Hozir chiqarish"
-                                  >
-                                      <Zap className="w-3 h-3" />
-                                  </button>
-                                )}
-                                <button
-                                    onClick={() => handleEditEpisodeClick(ep)}
-                                    className="text-indigo-400 hover:text-indigo-300 p-0.5"
-                                    title="Tahrirlash"
-                                >
-                                    <Edit3 className="w-3 h-3" />
-                                </button>
-                                <button
-                                    onClick={() => handleDeleteEpisode(ep.id, s.id)}
-                                    className="text-red-400 hover:text-red-300 p-0.5"
-                                    title="O'chirish"
-                                >
-                                    <Trash2 className="w-3 h-3" />
-                                </button>
-                            </div>
-                          </div>
-                        ))
-                      ) : (
-                        <p className="text-gray-500 text-sm italic">Epizodlar mavjud emas.</p>
-                      )}
-                    </div>
-                    
-                    {/* EPIZOD QO'SHISH TOGGLE/DROPDOWN TUGMASI */}
-                    <button
-                        onClick={() => toggleAddEpisodeForm(s.id)}
-                        className={`w-full flex items-center justify-center space-x-2 py-2 rounded-lg text-sm font-bold transition duration-200 shadow-md ${
-                            addEpisodeSeriesId === s.id ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-500/30' : 'bg-green-600 hover:bg-green-700 text-white shadow-green-500/30'
-                        }`}
-                    >
-                        {addEpisodeSeriesId === s.id ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-                        <span>{addEpisodeSeriesId === s.id ? "Formani Yopish" : "Yangi Epizod Qo'shish"}</span>
-                    </button>
-                    
+
+      {/* --- EPIZODLAR OYNASI (serial kartasi bosilganda) --- */}
+      {expandedItem && (
+        <div
+          className="fixed inset-0 z-40 bg-black/75 backdrop-blur-sm flex items-start justify-center p-2 sm:p-6 overflow-y-auto"
+          role="dialog"
+          aria-modal="true"
+          onClick={(e) => e.target === e.currentTarget && handleSeriesClick(expandedItem.id)}
+        >
+          <div className="w-full max-w-5xl my-auto bg-gray-800 rounded-2xl border border-gray-700 shadow-2xl text-white">
+            <div className="flex items-center gap-4 p-4 sm:p-6 border-b border-gray-700">
+              <img
+                src={getFullImageUrl(expandedItem.imagePath)}
+                alt={expandedItem.title}
+                className="w-14 h-20 sm:w-16 sm:h-24 object-cover rounded-lg flex-shrink-0 border border-gray-700"
+              />
+              <div className="flex-1 min-w-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-white break-words">{expandedItem.title}</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  {(episodes[expandedItem.id] || []).length} ta epizod
+                  {(episodes[expandedItem.id] || []).some((ep) => ep && ep.scheduled) &&
+                    ` · ${(episodes[expandedItem.id] || []).filter((ep) => ep && ep.scheduled).length} ta rejalashtirilgan`}
+                </p>
+              </div>
+              <button
+                onClick={() => handleSeriesClick(expandedItem.id)}
+                className="p-2 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition flex-shrink-0"
+                aria-label="Yopish"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-3 p-4 sm:px-6">
+              <button
+                onClick={() => toggleAddEpisodeForm(expandedItem.id)}
+                className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition shadow-md ${
+                  addEpisodeSeriesId === expandedItem.id
+                    ? 'bg-red-600 hover:bg-red-700 shadow-red-500/30'
+                    : 'bg-green-600 hover:bg-green-700 shadow-green-500/30'
+                }`}
+              >
+                {addEpisodeSeriesId === expandedItem.id ? <Minus className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                <span>{addEpisodeSeriesId === expandedItem.id ? "Formani yopish" : "Yangi epizod qo'shish"}</span>
+              </button>
+              <button
+                onClick={() => handleBackfillDurations(expandedItem.id)}
+                disabled={isBackfilling}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg text-sm font-medium transition disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Hajmi/davomiyligi yozilmagan epizodlarni Bunny'dan qayta yuklash"
+              >
+                {isBackfilling ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4 text-yellow-400" />}
+                <span>Hajm/davomiylikni yangilash</span>
+              </button>
+            </div>
+
                     {/* EPIZOD QO'SHISH FORMASI (TOGGLEABLE) */}
-                    {addEpisodeSeriesId === s.id && (
-                        <div className="mt-4 p-4 bg-gray-900/50 rounded-xl border border-gray-700/50 shadow-inner animate-fade-in-down">
+                    {addEpisodeSeriesId === expandedItem.id && (
+                        <div className="mx-4 sm:mx-6 mb-6 p-4 sm:p-5 bg-gray-900/60 rounded-xl border border-green-700/40 shadow-inner animate-fade-in-down">
                             <h4 className="text-md font-bold text-green-400 mb-3 flex items-center space-x-2">
                                 <Zap className="w-4 h-4"/>
                                 <span>Yangi Epizod Ma'lumotlari</span>
@@ -863,19 +846,19 @@ const SeriesList = () => {
                                 </div>
                             )}
                             <form
-                                onSubmit={(e) => handleAddEpisode(e, s.id)}
+                                onSubmit={(e) => handleAddEpisode(e, expandedItem.id)}
                                 className="space-y-3"
                             >
                                 {/* Title Input */}
                                 <div>
                                     <label
-                                    htmlFor={`episode-title-add-${s.id}`}
+                                    htmlFor={`episode-title-add-${expandedItem.id}`}
                                     className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                     Sarlavha <span className="text-red-500">*</span>
                                     </label>
                                     <input
-                                    id={`episode-title-add-${s.id}`}
+                                    id={`episode-title-add-${expandedItem.id}`}
                                     type="text"
                                     name="title"
                                     value={formData.title}
@@ -897,13 +880,13 @@ const SeriesList = () => {
                                 {/* Episode Number */}
                                 <div>
                                     <label
-                                        htmlFor={`episode-number-add-${s.id}`}
+                                        htmlFor={`episode-number-add-${expandedItem.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                         Epizod № <span className="text-red-500">*</span>
                                     </label>
                                     <input
-                                        id={`episode-number-add-${s.id}`}
+                                        id={`episode-number-add-${expandedItem.id}`}
                                         type="number"
                                         name="episodeNumber"
                                         value={formData.episodeNumber}
@@ -934,14 +917,14 @@ const SeriesList = () => {
                                 {/* Video URL */}
                                 <div>
                                     <label
-                                        htmlFor={`video-url-add-${s.id}`}
+                                        htmlFor={`video-url-add-${expandedItem.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                         Video URL <span className="text-red-500">*</span>
                                         <span className="normal-case text-gray-500"> — Bunny'ga yuklangan bo'lsa avtomatik taklif qilinadi</span>
                                     </label>
                                     <input
-                                        id={`video-url-add-${s.id}`}
+                                        id={`video-url-add-${expandedItem.id}`}
                                         type="text"
                                         name="videoUrl"
                                         value={formData.videoUrl}
@@ -965,13 +948,13 @@ const SeriesList = () => {
                                 {/* Rasm Yuklash */}
                                 <div>
                                     <label
-                                        htmlFor={`episode-image-add-${s.id}`}
+                                        htmlFor={`episode-image-add-${expandedItem.id}`}
                                         className="block text-xs font-semibold text-gray-300 uppercase mb-1"
                                     >
                                         Rasm (Thumbnail) <span className="normal-case text-gray-500">— ixtiyoriy, tanlamasangiz Bunny'dan avtomatik olinadi</span>
                                     </label>
                                     <input
-                                        id={`episode-image-add-${s.id}`}
+                                        id={`episode-image-add-${expandedItem.id}`}
                                         type="file"
                                         name="image"
                                         onChange={handleFileChange}
@@ -992,7 +975,7 @@ const SeriesList = () => {
                                     value={episodeSchedule}
                                     onChange={setEpisodeSchedule}
                                     episodeNumber={formData.episodeNumber}
-                                    lastScheduledAt={(episodes[s.id] || []).filter((ep) => ep && ep.scheduled && ep.publishAt).map((ep) => ep.publishAt).sort().pop()}
+                                    lastScheduledAt={(episodes[expandedItem.id] || []).filter((ep) => ep && ep.scheduled && ep.publishAt).map((ep) => ep.publishAt).sort().pop()}
                                 />
 
                                 <button
@@ -1006,11 +989,87 @@ const SeriesList = () => {
                             </form>
                         </div>
                     )}
+
+            <div className="px-4 sm:px-6 pb-6">
+              {!episodes[expandedItem.id] ? (
+                <div className="flex items-center justify-center py-10 text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" /> Yuklanmoqda...
                 </div>
-            )}
+              ) : episodes[expandedItem.id].length === 0 ? (
+                <p className="text-gray-500 text-sm italic py-6 text-center">Epizodlar mavjud emas.</p>
+              ) : (
+                <div className="rounded-xl border border-gray-700/70 divide-y divide-gray-700/70 overflow-hidden">
+                  {episodes[expandedItem.id].map((ep) => (
+                    <div
+                      key={ep.id}
+                      className={`flex flex-col sm:flex-row sm:items-center gap-3 px-3 sm:px-4 py-3 transition ${
+                        ep.scheduled ? 'bg-sky-950/30 hover:bg-sky-950/50' : 'bg-gray-800 hover:bg-gray-700/50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-10 flex-shrink-0 text-center">
+                          <div className="text-lg font-bold text-white leading-none">{ep.episodeNumber}</div>
+                          {ep.seasonNumber != null && (
+                            <div className="text-[11px] text-orange-400 mt-1">S{ep.seasonNumber}</div>
+                          )}
+                        </div>
+                        <div className="w-24 h-14 flex-shrink-0 rounded-md overflow-hidden bg-gray-900 border border-gray-700 hidden sm:block">
+                          {ep.thumbnail ? (
+                            <img src={getFullImageUrl(ep.thumbnail)} alt="" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Video className="w-5 h-5 text-gray-600" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm sm:text-base font-medium text-gray-100 break-words">{ep.title}</p>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-gray-400">
+                            {(ep.durationHours || ep.durationMinutes || ep.durationSeconds) ? (
+                              <span>⏱ {ep.durationHours ? `${ep.durationHours}:` : ""}{String(ep.durationMinutes || 0).padStart(2, "0")}:{String(ep.durationSeconds || 0).padStart(2, "0")}</span>
+                            ) : null}
+                            {ep.fileSizeMb ? <span>{Math.round(ep.fileSizeMb)} MB</span> : null}
+                            {ep.free && (
+                              <span className="flex items-center gap-1 text-yellow-400"><Gift className="w-3.5 h-3.5" />Bepul</span>
+                            )}
+                            {ep.scheduled && (
+                              <span className="flex items-center gap-1 text-sky-300" title="Shu vaqtgacha ilovada 'Tez kunda'">
+                                <Clock className="w-3.5 h-3.5" />{formatTashkent(ep.publishAt)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:flex-shrink-0 pl-[52px] sm:pl-0">
+                        {ep.scheduled && (
+                          <button
+                            onClick={() => handleReleaseNow(ep, expandedItem.id)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-600/20 text-sky-300 hover:bg-sky-600/30 transition"
+                          >
+                            <Zap className="w-3.5 h-3.5" /> Hozir chiqarish
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleEditEpisodeClick(ep)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600/20 text-indigo-300 hover:bg-indigo-600/30 transition"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" /> Tahrirlash
+                        </button>
+                        <button
+                          onClick={() => handleDeleteEpisode(ep.id, expandedItem.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-600/20 text-red-300 hover:bg-red-600/30 transition"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> O'chirish
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
       {/* --- MODAL (Tahrirlash) --- */}
       {(editSeries || editEpisode) && (
