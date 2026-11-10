@@ -352,6 +352,10 @@ const SeriesList = () => {
       if (!formData.videoUrl.trim()) errors.videoUrl = "Video URL is required";
     } else {
       if (!formData.status) errors.status = "Status is required";
+      if (editSeries && editSeries.subscriptionBased && !formData.subscriptionBased
+          && !formData.monthlyPrice && !formData.quarterlyPrice) {
+        errors.price = "Alohida sotiladigan serialga kamida bitta narx kiriting.";
+      }
     }
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -1148,7 +1152,49 @@ const SeriesList = () => {
                   {formErrors.status && (<p className="text-red-400 text-xs mt-1">{formErrors.status}</p>)}
                 </div>
 
+                {/* Sotuv turi */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">Sotuv turi</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      { value: false, label: "Alohida sotiladi", hint: "Serialning o'z 1/3 oylik narxi bilan" },
+                      { value: true, label: "Umumiy obunaga kiradi", hint: "Premium obunachilarga ochiq" },
+                    ].map((opt) => (
+                      <button
+                        type="button"
+                        key={String(opt.value)}
+                        onClick={() => setFormData((prev) => ({ ...prev, subscriptionBased: opt.value }))}
+                        className={`text-left px-3 py-2.5 rounded-lg border transition ${
+                          !!formData.subscriptionBased === opt.value
+                            ? 'bg-indigo-600/30 border-indigo-500 text-white'
+                            : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-indigo-500'
+                        }`}
+                      >
+                        <span className="block text-sm font-semibold">{opt.label}</span>
+                        <span className="block text-xs text-gray-400">{opt.hint}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {!editSeries.subscriptionBased && formData.subscriptionBased && (
+                    <p className="text-xs text-sky-300 mt-2">
+                      Saqlangach, faol premium obunachilar bu serialni darhol ko'ra boshlaydi. Serialni alohida sotib olganlarning
+                      kirishi o'z muddati tugaguncha saqlanadi. Ilovada endi serial narxi emas, obuna tarifi taklif qilinadi.
+                    </p>
+                  )}
+                  {editSeries.subscriptionBased && !formData.subscriptionBased && (
+                    <p className="text-xs text-yellow-400 mt-2">
+                      Diqqat: saqlangach, premium obunachilar bu serialga kirishni yo'qotadi (alohida sotib olganlar bundan mustasno).
+                      Serialga narx belgilang, aks holda uni sotib olib bo'lmaydi.
+                    </p>
+                  )}
+                </div>
+
                 {/* Narx maydonlari */}
+                {formData.subscriptionBased ? (
+                  <p className="text-xs text-gray-500 -mt-2">
+                    Umumiy obunadagi serialda narx obuna tarifidan olinadi. Serialning o'z narxi saqlanib qoladi — alohida sotuvga qaytarsangiz yana ishlaydi.
+                  </p>
+                ) : (
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="series-monthly-price" className="block text-sm font-medium text-gray-300 mb-2">
@@ -1180,7 +1226,9 @@ const SeriesList = () => {
                       className="w-full p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none text-white"
                     />
                   </div>
+                  {formErrors.price && (<p className="col-span-2 text-red-400 text-xs -mt-2">{formErrors.price}</p>)}
                 </div>
+                )}
 
                 {/* Bepul qismlar: ilovada doim 1-qism bepul, qo'shimchalari Telegram kanalda */}
                 <div>
