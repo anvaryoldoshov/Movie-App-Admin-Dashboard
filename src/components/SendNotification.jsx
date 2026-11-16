@@ -41,6 +41,7 @@ const SendNotification = () => {
   const [audience, setAudience] = useState('ACTIVE');
   const [audienceCount, setAudienceCount] = useState(null);
   const [counting, setCounting] = useState(false);
+  const [linkSeriesId, setLinkSeriesId] = useState('');
 
   useEffect(() => {
     fetchRecentSounds();
@@ -98,6 +99,13 @@ const SendNotification = () => {
     setFormData({ title: '', body: '', sound: '', image: null });
     setPreviewUrl(null);
     setExtraFields([]);
+    setLinkSeriesId('');
+  };
+
+  const buildData = () => {
+    const data = extraFieldsToObject(extraFields);
+    if (linkSeriesId) data.seriesId = String(linkSeriesId);
+    return data;
   };
 
   const addExtraField = () => setExtraFields([...extraFields, newExtraField()]);
@@ -135,7 +143,7 @@ const SendNotification = () => {
     try {
       const result = await pushNotification({
         ...formData,
-        data: extraFieldsToObject(extraFields),
+        data: buildData(),
         seriesIds: targeted ? selectedSeriesIds : undefined,
         audience: targeted ? audience : undefined,
       });
@@ -167,7 +175,7 @@ const SendNotification = () => {
 
     setTestSending(true);
     try {
-      await testPushNotification({ ...formData, token: testToken.trim(), data: extraFieldsToObject(extraFields) });
+      await testPushNotification({ ...formData, token: testToken.trim(), data: buildData() });
       setSuccess('Test push shu tokenga yuborildi.');
       setTimeout(() => setSuccess(null), 5000);
     } catch (err) {
@@ -302,6 +310,32 @@ const SendNotification = () => {
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Bosilganda ochiladigan serial */}
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-300">
+                Bosilganda ochiladigan serial (ixtiyoriy)
+              </label>
+              <select
+                value={linkSeriesId}
+                onChange={(e) => setLinkSeriesId(e.target.value)}
+                className="block w-full p-3 bg-[#0f111a] border border-gray-600 rounded-lg text-white focus:ring-blue-500 focus:border-blue-500 shadow-inner"
+              >
+                <option value="">
+                  {target === 'SERIES' && selectedSeriesIds.length === 1
+                    ? 'Tanlangan serial ochiladi'
+                    : 'Tanlanmagan — ilova bildirishnomalar sahifasi ochiladi'}
+                </option>
+                {[...seriesList]
+                  .sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>{s.title}</option>
+                  ))}
+              </select>
+              <p className="text-[11px] text-gray-500 mt-2">
+                Foydalanuvchi bildirishnomani bossa, ilovada shu serial sahifasi ochiladi.
+              </p>
             </div>
 
             {/* Sarlavha */}
